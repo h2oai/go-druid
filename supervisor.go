@@ -47,7 +47,7 @@ func (s *SupervisorService) CreateOrUpdate(spec interface{}) (string, error) {
 		return "", err
 	}
 	var result CreateSupervisorResponse
-	_, err = s.client.Do(r, result)
+	_, err = s.client.Do(r, &result)
 	if err != nil {
 		return "", err
 	}
@@ -84,7 +84,7 @@ func (s *SupervisorService) GetSpec(supervisorId string) (interface{}, error) {
 	if err != nil {
 		return result, err
 	}
-	_, err = s.client.Do(r, result)
+	_, err = s.client.Do(r, &result)
 	if err != nil {
 		return result, err
 	}
@@ -99,7 +99,7 @@ func (s *SupervisorService) GetStatus(supervisorId string) (interface{}, error) 
 	if err != nil {
 		return result, err
 	}
-	_, err = s.client.Do(r, result)
+	_, err = s.client.Do(r, &result)
 	if err != nil {
 		return result, err
 	}
@@ -156,7 +156,7 @@ func (s *SupervisorService) Terminate(supervisorId string) (string, error) {
 		return "", err
 	}
 	var result TerminateSupervisorResponse
-	_, err = s.client.Do(r, result)
+	_, err = s.client.Do(r, &result)
 	if err != nil {
 		return "", err
 	}
