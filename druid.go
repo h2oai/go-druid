@@ -24,7 +24,6 @@ const (
 	middleManagerPathPrefix      = "druid/worker/v1/"
 	peonPathPrefix               = "druid/worker/v1/chat/"
 	historicalPathPrefix         = "druid/historical/v1/"
-	supervisorPathPrefix         = "druid/indexer/v1/supervisor"
 	defaultRetryWaitMin          = 100 * time.Millisecond
 	defaultRetryWaitMax          = 3 * time.Second
 	defaultRetryMax              = 5
