@@ -2,6 +2,7 @@ package druid
 
 import (
 	"strings"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -37,6 +38,22 @@ type CreateSupervisorResponse struct {
 // TerminateSupervisorResponse is a response object of Druid SupervisorService's Terminate method
 type TerminateSupervisorResponse struct {
 	SupervisorId string `json:"id"`
+}
+
+type GetStatusResponsePayload struct {
+	Datasource      string `json:"dataSource"`
+	Stream          string `json:"stream"`
+	State           string `json:"state"`
+	Partitions      int    `json:"partitions"`
+	Replicas        int    `json:"replicas"`
+	DurationSeconds int    `json:"durationSeconds"`
+}
+
+// GetStatusResponse is a response object of Druid SupervisorService's GetStatus method
+type GetStatusResponse struct {
+	SupervisorId   string                   `json:"id"`
+	GenerationTime time.Time                `json:"generationTime"`
+	Payload        GetStatusResponsePayload `json:"payload"`
 }
 
 // CreateOrUpdate submits an ingestion specification to druid Supervisor API with a pre-configured druid client
@@ -79,7 +96,7 @@ func (s *SupervisorService) GetAllActiveStates() ([]string, error) {
 // GetSpec calls druid Supervisor Status API
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#get-supervisor-specification
 func (s *SupervisorService) GetSpec(supervisorId string) (interface{}, error) {
-	r, err := s.client.NewRequest("GET", applySupervisorId(supervisorSpecPathPrefix, supervisorId), "")
+	r, err := s.client.NewRequest("GET", applySupervisorId(supervisorSpecPathPrefix, supervisorId), nil)
 	var result interface{}
 	if err != nil {
 		return result, err
@@ -93,9 +110,9 @@ func (s *SupervisorService) GetSpec(supervisorId string) (interface{}, error) {
 
 // GetStatus calls druid Supervisor service's Get status API
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#get-supervisor-status
-func (s *SupervisorService) GetStatus(supervisorId string) (interface{}, error) {
-	r, err := s.client.NewRequest("GET", applySupervisorId(supervisorStatusPathPrefix, supervisorId), "")
-	var result interface{}
+func (s *SupervisorService) GetStatus(supervisorId string) (GetStatusResponse, error) {
+	r, err := s.client.NewRequest("GET", applySupervisorId(supervisorStatusPathPrefix, supervisorId), nil)
+	var result GetStatusResponse
 	if err != nil {
 		return result, err
 	}
