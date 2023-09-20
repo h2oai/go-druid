@@ -1,11 +1,8 @@
 package druid
 
 import (
+	"errors"
 	"strings"
-	"time"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 const (
@@ -30,35 +27,19 @@ type SupervisorService struct {
 	client *Client
 }
 
-// CreateSupervisorResponse is a response object of Druid SupervisorService's SubmitTask method
+// CreateSupervisorResponse is a response object of Druid SupervisorService's SubmitTask method.
 type CreateSupervisorResponse struct {
-	SupervisorId string `json:"id"`
+	SupervisorID string `json:"id"`
 }
 
-// TerminateSupervisorResponse is a response object of Druid SupervisorService's Terminate method
+// TerminateSupervisorResponse is a response object of Druid SupervisorService's Terminate method.
 type TerminateSupervisorResponse struct {
-	SupervisorId string `json:"id"`
+	SupervisorID string `json:"id"`
 }
 
-type GetStatusResponsePayload struct {
-	Datasource      string `json:"dataSource"`
-	Stream          string `json:"stream"`
-	State           string `json:"state"`
-	Partitions      int    `json:"partitions"`
-	Replicas        int    `json:"replicas"`
-	DurationSeconds int    `json:"durationSeconds"`
-}
-
-// GetStatusResponse is a response object of Druid SupervisorService's GetStatus method
-type GetStatusResponse struct {
-	SupervisorId   string                   `json:"id"`
-	GenerationTime time.Time                `json:"generationTime"`
-	Payload        GetStatusResponsePayload `json:"payload"`
-}
-
-// CreateOrUpdate submits an ingestion specification to druid Supervisor API with a pre-configured druid client
+// CreateOrUpdate submits an ingestion specification to druid Supervisor API with a pre-configured druid client.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#create-or-update-a-supervisor
-func (s *SupervisorService) CreateOrUpdate(spec interface{}) (string, error) {
+func (s *SupervisorService) CreateOrUpdate(spec InputIngestionSpec) (string, error) {
 	r, err := s.client.NewRequest("POST", supervisorPathPrefix, spec)
 	if err != nil {
 		return "", err
@@ -68,36 +49,36 @@ func (s *SupervisorService) CreateOrUpdate(spec interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return result.SupervisorId, nil
+	return result.SupervisorID, nil
 }
 
 func applySupervisorId(input string, supervisorId string) string {
 	return strings.Replace(input, ":supervisorId", supervisorId, 1)
 }
 
-// GetActiveIDs returns array of active supervisor IDs
+// GetActiveIDs returns array of active supervisor IDs.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#get-an-array-of-active-supervisor-ids
 func (s *SupervisorService) GetActiveIDs() ([]string, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetActiveIDs not implemented")
+	return nil, errors.New("method GetActiveIDs not implemented")
 }
 
-// GetAllActiveSpecs returns array of active supervisor objects
+// GetAllActiveSupervisors returns array of active supervisor objects.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#get-an-array-of-active-supervisor-objects
-func (s *SupervisorService) GetAllActiveSpecs() ([]interface{}, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAllActiveSpecs not implemented")
+func (s *SupervisorService) GetAllActiveSupervisors() ([]SupervisorStateWithSpec, error) {
+	return nil, errors.New("method GetAllActiveSpecs not implemented")
 }
 
-// GetAllActiveSpecs returns array of active supervisor objects
-// https://druid.apache.org/docs/latest/api-reference/supervisor-api/#get-an-array-of-active-supervisor-objects
-func (s *SupervisorService) GetAllActiveStates() ([]string, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAllActiveStates not implemented")
+// GetAllActiveStates returns an array of supervisor states.
+// https://druid.apache.org/docs/latest/api-reference/supervisor-api/#get-an-array-of-supervisor-states
+func (s *SupervisorService) GetActiveStates() ([]SupervisorState, error) {
+	return nil, errors.New("method GetAllActiveStates not implemented")
 }
 
-// GetSpec calls druid Supervisor Status API
+// GetSpec calls druid Supervisor Status API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#get-supervisor-specification
-func (s *SupervisorService) GetSpec(supervisorId string) (interface{}, error) {
+func (s *SupervisorService) GetSpec(supervisorId string) (OutputIngestionSpec, error) {
 	r, err := s.client.NewRequest("GET", applySupervisorId(supervisorSpecPathPrefix, supervisorId), nil)
-	var result interface{}
+	var result OutputIngestionSpec
 	if err != nil {
 		return result, err
 	}
@@ -108,11 +89,11 @@ func (s *SupervisorService) GetSpec(supervisorId string) (interface{}, error) {
 	return result, nil
 }
 
-// GetStatus calls druid Supervisor service's Get status API
+// GetStatus calls druid Supervisor service's Get status API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#get-supervisor-status
-func (s *SupervisorService) GetStatus(supervisorId string) (GetStatusResponse, error) {
+func (s *SupervisorService) GetStatus(supervisorId string) (SupervisorStatus, error) {
 	r, err := s.client.NewRequest("GET", applySupervisorId(supervisorStatusPathPrefix, supervisorId), nil)
-	var result GetStatusResponse
+	var result SupervisorStatus
 	if err != nil {
 		return result, err
 	}
@@ -123,49 +104,51 @@ func (s *SupervisorService) GetStatus(supervisorId string) (GetStatusResponse, e
 	return result, nil
 }
 
-// GetAuditHistory calls druid Supervisor Status API
+// GetAuditHistory calls druid Supervisor Status API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#get-audit-history-for-a-specific-supervisor
 func (s *SupervisorService) GetAuditHistory(_supervisorId string) (interface{}, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAuditHistory not implemented")
+	return nil, errors.New("method GetAuditHistory not implemented")
 }
 
-// GetAuditHistoryAll calls druid Supervisor Status API
+// GetAuditHistoryAll calls druid Supervisor Status API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#get-supervisor-specification
-func (s *SupervisorService) GetAuditHistoryAll() ([]interface{}, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAuditHistoryAll not implemented")
+func (s *SupervisorService) GetAuditHistoryAll() (map[string]OutputIngestionSpec, error) {
+	return nil, errors.New("method GetAuditHistoryAll not implemented")
 }
 
-// Suspend calls druid Supervisor service's Suspend API
+// Suspend calls druid Supervisor service's Suspend API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#suspend-a-running-supervisor
-func (s *SupervisorService) Suspend(_supervisorId string) (interface{}, error) {
-	return "", status.Errorf(codes.Unimplemented, "method Suspend not implemented")
+func (s *SupervisorService) Suspend(_supervisorId string) (OutputIngestionSpec, error) {
+	var res OutputIngestionSpec
+	return res, errors.New("method Suspend not implemented")
 }
 
-// SuspendAll calls druid Supervisor service's SuspendAll API
+// SuspendAll calls druid Supervisor service's SuspendAll API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#suspend-all-supervisors
 func (s *SupervisorService) SuspendAll() (string, error) {
-	return "", status.Errorf(codes.Unimplemented, "method SuspendAll not implemented")
+	return "", errors.New("method SuspendAll not implemented")
 }
 
-// Resume calls druid Supervisor service's Resume API
+// Resume calls druid Supervisor service's Resume API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#resume-a-supervisor
-func (s *SupervisorService) Resume(_supervisorId string) (interface{}, error) {
-	return "", status.Errorf(codes.Unimplemented, "method Resume not implemented")
+func (s *SupervisorService) Resume(_supervisorId string) (OutputIngestionSpec, error) {
+	var res OutputIngestionSpec
+	return res, errors.New("method Resume not implemented")
 }
 
-// ResumeAll calls druid Supervisor service's ResumeAll API
+// ResumeAll calls druid Supervisor service's ResumeAll API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#resume-all-supervisors
 func (s *SupervisorService) ResumeAll() (string, error) {
-	return "", status.Errorf(codes.Unimplemented, "method ResumeAll not implemented")
+	return "", errors.New("method ResumeAll not implemented")
 }
 
-// Reset calls druid Supervisor service's Shutdown API
+// Reset calls druid Supervisor service's Shutdown API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#reset-a-supervisor
 func (s *SupervisorService) Reset(_supervisorId string) (string, error) {
-	return "", status.Errorf(codes.Unimplemented, "method Reset not implemented")
+	return "", errors.New("method Reset not implemented")
 }
 
-// Terminate calls druid Supervisor service's Terminate API
+// Terminate calls druid Supervisor service's Terminate API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#terminate-a-supervisor
 func (s *SupervisorService) Terminate(supervisorId string) (string, error) {
 	r, err := s.client.NewRequest("POST", applySupervisorId(supervisorTerminatePathPrefix, supervisorId), "")
@@ -177,17 +160,17 @@ func (s *SupervisorService) Terminate(supervisorId string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return result.SupervisorId, nil
+	return result.SupervisorID, nil
 }
 
-// TerminateAll calls druid Supervisor service's TerminateAll API
+// TerminateAll calls druid Supervisor service's TerminateAll API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#terminate-all-supervisors
 func (s *SupervisorService) TerminateAll() (string, error) {
-	return "", status.Errorf(codes.Unimplemented, "method TerminateAll not implemented")
+	return "", errors.New("method TerminateAll not implemented")
 }
 
-// Shutdown calls druid Supervisor service's Shutdown API
+// Shutdown calls druid Supervisor service's Shutdown API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#shut-down-a-supervisor
 func (s *SupervisorService) Shutdown(_supervisorId string) (string, error) {
-	return "", status.Errorf(codes.Unimplemented, "method Shutdown not implemented")
+	return "", errors.New("method Shutdown not implemented")
 }

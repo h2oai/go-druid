@@ -172,7 +172,7 @@ func (s *TestRetrySuite) TestDefaultRetry() {
 	} {
 		{
 			s.Run(tc.name, func() {
-				ctx := context.TODO()
+				ctx := context.Background()
 
 				resp := buildMockResp(tc.statusCode, tc.response)
 				retry, err := defaultRetry(ctx, &resp, nil)
