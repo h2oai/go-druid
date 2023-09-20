@@ -158,7 +158,7 @@ type MetadataStorageUpdaterJobSpec struct {
 	CreteTable     bool           `json:"creteTable"`
 	Host           string         `json:"host"`
 	Port           string         `json:"port"`
-	dbcpProperties map[string]any `json:"dbcp"`
+	DBCPProperties map[string]any `json:"dbcp"`
 }
 
 // IOConfig influences how data is read into Druid from a source system.
