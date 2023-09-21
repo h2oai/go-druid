@@ -104,21 +104,22 @@ func (s *SupervisorService) GetStatus(supervisorId string) (SupervisorStatus, er
 	return result, nil
 }
 
-// GetAuditHistory calls druid Supervisor Status API.
+// GetAuditHistory calls druid Supervisor service's AuditHistory API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#get-audit-history-for-a-specific-supervisor
-func (s *SupervisorService) GetAuditHistory(_supervisorId string) (interface{}, error) {
-	return nil, errors.New("method GetAuditHistory not implemented")
+func (s *SupervisorService) GetAuditHistory(string) (SupervisorAuditHistory, error) {
+	var res SupervisorAuditHistory
+	return res, errors.New("method GetAuditHistory not implemented")
 }
 
-// GetAuditHistoryAll calls druid Supervisor Status API.
-// https://druid.apache.org/docs/latest/api-reference/supervisor-api/#get-supervisor-specification
-func (s *SupervisorService) GetAuditHistoryAll() (map[string]OutputIngestionSpec, error) {
+// GetAuditHistoryAll calls druid Supervisor service's AuditHistoryAll API.
+// https://druid.apache.org/docs/latest/api-reference/supervisor-api/#get-audit-history-for-all-supervisors
+func (s *SupervisorService) GetAuditHistoryAll() (map[string]SupervisorAuditHistory, error) {
 	return nil, errors.New("method GetAuditHistoryAll not implemented")
 }
 
 // Suspend calls druid Supervisor service's Suspend API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#suspend-a-running-supervisor
-func (s *SupervisorService) Suspend(_supervisorId string) (OutputIngestionSpec, error) {
+func (s *SupervisorService) Suspend(string) (OutputIngestionSpec, error) {
 	var res OutputIngestionSpec
 	return res, errors.New("method Suspend not implemented")
 }
@@ -131,7 +132,7 @@ func (s *SupervisorService) SuspendAll() (string, error) {
 
 // Resume calls druid Supervisor service's Resume API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#resume-a-supervisor
-func (s *SupervisorService) Resume(_supervisorId string) (OutputIngestionSpec, error) {
+func (s *SupervisorService) Resume(string) (OutputIngestionSpec, error) {
 	var res OutputIngestionSpec
 	return res, errors.New("method Resume not implemented")
 }
@@ -142,9 +143,9 @@ func (s *SupervisorService) ResumeAll() (string, error) {
 	return "", errors.New("method ResumeAll not implemented")
 }
 
-// Reset calls druid Supervisor service's Shutdown API.
+// Reset calls druid Supervisor service's Reset API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#reset-a-supervisor
-func (s *SupervisorService) Reset(_supervisorId string) (string, error) {
+func (s *SupervisorService) Reset(string) (string, error) {
 	return "", errors.New("method Reset not implemented")
 }
 
@@ -171,6 +172,6 @@ func (s *SupervisorService) TerminateAll() (string, error) {
 
 // Shutdown calls druid Supervisor service's Shutdown API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#shut-down-a-supervisor
-func (s *SupervisorService) Shutdown(_supervisorId string) (string, error) {
+func (s *SupervisorService) Shutdown(string) (string, error) {
 	return "", errors.New("method Shutdown not implemented")
 }

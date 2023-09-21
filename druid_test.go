@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
 )
 
 func TestSetBaseURLWithSuffix(t *testing.T) {
@@ -40,31 +39,40 @@ func TestNewClientWithSkipVerify(t *testing.T) {
 
 // TODO: at some point use https://golang.org/src/crypto/tls/example_test.go this to create server with bad cert and test
 
-type TestRetrySuite struct {
-	suite.Suite
-}
-
-func TestRetry(t *testing.T) {
-	suite.Run(t, &TestRetrySuite{})
-}
-
-func (s *TestRetrySuite) TestDefaultRetry() {
-	for _, tc := range []struct {
-		name       string
+func TestDefaultRetry(t *testing.T) {
+	type testCase struct {
 		statusCode int
 		response   string
 		wantErr    string
 		wantRetry  bool
-	}{
-		{
-			name:       "OK",
+	}
+
+	run := func(t *testing.T, tc testCase) {
+		// Given
+		ctx := context.Background()
+		resp := buildMockResp(tc.statusCode, tc.response)
+
+		// When
+		retry, err := defaultRetry(ctx, &resp, nil)
+
+		// Then
+		assert := assert.New(t)
+		if tc.wantErr != "" {
+			assert.Equal(tc.wantErr, err.Error())
+		} else {
+			assert.NoError(err)
+		}
+		assert.Equal(tc.wantRetry, retry)
+	}
+
+	testCases := map[string]testCase{
+		"OK": {
 			statusCode: 200,
 			response:   `{ "id"": "12345"}`,
 			wantErr:    "",
 			wantRetry:  false,
 		},
-		{
-			name:       "SQL parse error",
+		"SQL parse error": {
 			statusCode: 400,
 			response: `{
 				"error": "SQL parse failed", "errorMessage" : "incorrect input."
@@ -72,8 +80,7 @@ func (s *TestRetrySuite) TestDefaultRetry() {
 			wantErr:   "failed to query Druid: {Error:SQL parse failed ErrorMessage:incorrect input. ErrorClass: Host:}",
 			wantRetry: false,
 		},
-		{
-			name:       "SQL plan validatio error",
+		"SQL plan validatio error": {
 			statusCode: 400,
 			response: `{
 				"error": "Plan validation failed", "errorMessage" : "validation error."
@@ -81,8 +88,7 @@ func (s *TestRetrySuite) TestDefaultRetry() {
 			wantErr:   "failed to query Druid: {Error:Plan validation failed ErrorMessage:validation error. ErrorClass: Host:}",
 			wantRetry: false,
 		},
-		{
-			name:       "Resource limit error",
+		"Resource limit error": {
 			statusCode: 400,
 			response: `{
 				"error": "Resource limit exceeded", "errorMessage" : "Something bad happened."
@@ -90,8 +96,7 @@ func (s *TestRetrySuite) TestDefaultRetry() {
 			wantErr:   "error response from Druid: {Error:Resource limit exceeded ErrorMessage:Something bad happened. ErrorClass: Host:}",
 			wantRetry: true,
 		},
-		{
-			name:       "Query capacity exceeded",
+		"Query capacity exceeded": {
 			statusCode: 429,
 			response: `{
 				"error": "Query capacity exceeded", "errorMessage" : "capacity exceeded."
@@ -99,8 +104,7 @@ func (s *TestRetrySuite) TestDefaultRetry() {
 			wantErr:   "error response from Druid: {Error:Query capacity exceeded ErrorMessage:capacity exceeded. ErrorClass: Host:}",
 			wantRetry: true,
 		},
-		{
-			name:       "Unsupported operation",
+		"Unsupported operation": {
 			statusCode: 501,
 			response: `{
 				"error": "Unsupported operation", "errorMessage" : "wrong operation."
@@ -108,8 +112,7 @@ func (s *TestRetrySuite) TestDefaultRetry() {
 			wantErr:   "failed to query Druid: {Error:Unsupported operation ErrorMessage:wrong operation. ErrorClass: Host:}",
 			wantRetry: false,
 		},
-		{
-			name:       "Query timeout",
+		"Query timeout": {
 			statusCode: 504,
 			response: `{
 				"error": "Query timeout", "errorMessage" : "timeout."
@@ -117,8 +120,7 @@ func (s *TestRetrySuite) TestDefaultRetry() {
 			wantErr:   "error response from Druid: {Error:Query timeout ErrorMessage:timeout. ErrorClass: Host:}",
 			wantRetry: true,
 		},
-		{
-			name:       "Query cancelled",
+		"Query cancelled": {
 			statusCode: 500,
 			response: `{
 				"error": "Query cancelled", "errorMessage" : "cancelled."
@@ -126,8 +128,7 @@ func (s *TestRetrySuite) TestDefaultRetry() {
 			wantErr:   "failed to query Druid: {Error:Query cancelled ErrorMessage:cancelled. ErrorClass: Host:}",
 			wantRetry: false,
 		},
-		{
-			name:       "Unknown exception",
+		"Unknown exception": {
 			statusCode: 500,
 			response: `{
 				"error": "Unknown exception", "errorMessage" : "failure."
@@ -135,15 +136,13 @@ func (s *TestRetrySuite) TestDefaultRetry() {
 			wantErr:   "failed to query Druid: {Error:Unknown exception ErrorMessage:failure. ErrorClass: Host:}",
 			wantRetry: false,
 		},
-		{
-			name:       "Invalid json",
+		"Invalid json": {
 			statusCode: 500,
 			response:   `invalid json`,
 			wantErr:    "failed to read the response from Druid: invalid character 'i' looking for beginning of value",
 			wantRetry:  true,
 		},
-		{
-			name:       "Request body content type is not in JSON format",
+		"Request body content type is not in JSON format": {
 			statusCode: 415,
 			response: `{
 				"error": "Request body content type is not in JSON format."
@@ -151,8 +150,8 @@ func (s *TestRetrySuite) TestDefaultRetry() {
 			wantErr:   "error response from Druid: {Error:Request body content type is not in JSON format. ErrorMessage: ErrorClass: Host:}",
 			wantRetry: true,
 		},
-		{
-			name:       "Query Supervisor Status: Invalid supervisor ID",
+		"Query Supervisor Status: Invalid supervisor ID": {
+
 			statusCode: 404,
 			response: `{
 				"error": "Invalid supervisor ID."
@@ -160,8 +159,8 @@ func (s *TestRetrySuite) TestDefaultRetry() {
 			wantErr:   "error response from Druid: {Error:Invalid supervisor ID. ErrorMessage: ErrorClass: Host:}",
 			wantRetry: true,
 		},
-		{
-			name:       "Terminate Query Supervisor: Invalid supervisor ID",
+		"Terminate Query Supervisor: Invalid supervisor ID": {
+
 			statusCode: 404,
 			response: `{
 				"error": "Invalid supervisor ID or supervisor not running."
@@ -169,21 +168,11 @@ func (s *TestRetrySuite) TestDefaultRetry() {
 			wantErr:   "error response from Druid: {Error:Invalid supervisor ID or supervisor not running. ErrorMessage: ErrorClass: Host:}",
 			wantRetry: true,
 		},
-	} {
-		{
-			s.Run(tc.name, func() {
-				ctx := context.Background()
+	}
 
-				resp := buildMockResp(tc.statusCode, tc.response)
-				retry, err := defaultRetry(ctx, &resp, nil)
-				if tc.wantErr != "" {
-					s.Equal(tc.wantErr, err.Error())
-				} else {
-					s.Nil(err)
-				}
-				s.Equal(tc.wantRetry, retry)
-			})
-		}
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) { run(t, tc) })
+
 	}
 }
 

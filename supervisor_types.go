@@ -11,12 +11,15 @@ type InputIngestionSpec struct {
 	TuningConfig *TuningConfig `json:"tuningConfig,omitempty"`
 }
 
+// IngestionSpecData is the core supervisor specification data returned by druid supervisor APIs.
+// It is a part of OutputIngestionSpec.
 type IngestionSpecData struct {
 	DataSchema   *DataSchema   `json:"dataSchema,omitempty"`
 	IOConfig     *IOConfig     `json:"ioConfig,omitempty"`
 	TuningConfig *TuningConfig `json:"tuningConfig,omitempty"`
 }
 
+// OutputIngestionSpec is full supervisor specification format returned by druid supervisor APIs.
 type OutputIngestionSpec struct {
 	Type      string             `json:"type"`
 	Context   string             `json:"context"`
@@ -24,14 +27,49 @@ type OutputIngestionSpec struct {
 	Spec      *IngestionSpecData `json:"spec"`
 }
 
+// SupervisorAuditHistory is audit data for supervisor reurned by supervisor audit history APIs.
+type SupervisorAuditHistory struct {
+	Spec    OutputIngestionSpec `json:"spec"`
+	Version string              `json:"version"`
+}
+
+// BitmapFactory is a field of IndexSpec.
+type BitmapFactory struct {
+	Type string `json:"type"`
+}
+
+// StringEncodingStrategy type for specifying string encoding at indexing stage.
+type StringEncodingStrategy struct {
+	Type string `json:"type"`
+	// FrontCoded fields
+	BucketSize    int `json:"bucketSize,omitempty"`
+	FormatVersion int `json:"formatVersion,omitempty"`
+}
+
+// IndexSpec defines segment storage format options to be used at indexing time.
+// https://druid.apache.org/docs/latest/ingestion/ingestion-spec#indexspec
+type IndexSpec struct {
+	Bitmap                 *BitmapFactory          `json:"bitmap,omitempty"`
+	DimensionCompression   string                  `json:"dimensionCompression"`
+	StringEncodingStrategy *StringEncodingStrategy `json:"stringEncodingStrategy,omitempty"`
+	MetricCompression      string                  `json:"metricCompression,omitempty"`
+	LongEncoding           string                  `json:"longEncoding,omitempty"`
+	JsonCompression        string                  `json:"jsonCompression,omitempty"`
+	SegmentLoader          string                  `json:"segmentLoader,omitempty"`
+}
+
+// TuningConfig controls various tuning parameters specific to each ingestion method.
+// https://druid.apache.org/docs/latest/ingestion/ingestion-spec#tuningconfig
 type TuningConfig struct {
-	Type                      string `json:"type"`
-	IntermediatePersistPeriod string `json:"intermediatePersistPeriod,omitempty"`
-	MaxRowsPerSegment         int    `json:"maxRowsPerSegment,omitempty"`
-	MaxRowsInMemory           int    `json:"maxRowsInMemory,omitempty"`
+	Type                             string     `json:"type"`
+	IntermediatePersistPeriod        string     `json:"intermediatePersistPeriod,omitempty"`
+	MaxRowsPerSegment                int        `json:"maxRowsPerSegment,omitempty"`
+	MaxRowsInMemory                  int        `json:"maxRowsInMemory,omitempty"`
+	IndexSpecForIntermediatePersists *IndexSpec `json:"indexSpecForIntermediatePersists"`
 }
 
 // Metric is a Druid aggregator that is applied at ingestion time.
+// https://druid.apache.org/docs/latest/ingestion/ingestion-spec#metricsspec
 type Metric struct {
 	Name      string `json:"name"`
 	Type      string `json:"type"`
@@ -49,10 +87,10 @@ type DataSchema struct {
 	MetricSpec      []Metric         `json:"metricSpec,omitempty"`
 }
 
-// FlattenSpec is responsible for flattening nested input
-// JSON data into Druid's flat data model.
+// FlattenSpec is responsible for flattening nested input JSON data into Druid's flat data model.
 type FlattenSpec struct {
-	Fields FieldList `json:"fields"`
+	UseFieldDiscovery bool      `json:"useFieldDiscovery,omitempty"`
+	Fields            FieldList `json:"fields"`
 }
 
 // TimestampSpec is responsible for configuring the primary timestamp.
@@ -87,19 +125,23 @@ type DimensionSet []string
 // DimensionsSpec is responsible for configuring Druid's dimensions. They're a
 // set of columns in Druid's data model that can be used for grouping, filtering
 // or applying aggregations.
+// https://druid.apache.org/docs/latest/ingestion/ingestion-spec#dimensionsspec
 type DimensionsSpec struct {
 	Dimensions DimensionSet `json:"dimensions"`
 }
 
 // GranularitySpec allows for configuring operations such as data segment
 // partitioning, truncating timestamps, time chunk segmentation or roll-up.
+// https://druid.apache.org/docs/latest/ingestion/ingestion-spec#granularityspec
 type GranularitySpec struct {
-	Type               string `json:"type"`
-	SegmentGranularity string `json:"segmentGranularity"`
-	QueryGranularity   string `json:"queryGranularity"`
-	Rollup             bool   `json:"rollup"`
+	Type               string   `json:"type"`
+	SegmentGranularity string   `json:"segmentGranularity,omitempty"`
+	QueryGranularity   string   `json:"queryGranularity,omitempty"`
+	Rollup             bool     `json:"rollup,omitempty"`
+	Intervals          []string `json:"intervals,omitempty"`
 }
 
+// AutoScalerConfig is part of IOConfig that controls ingestion auto-scaling.
 type AutoScalerConfig struct {
 	EnableTaskAutoScaler                 bool    `json:"enableTaskAutoScaler"`
 	LagCollectionIntervalMillis          int     `json:"lagCollectionIntervalMillis"`
@@ -123,7 +165,7 @@ type IdleConfig struct {
 	InactiveAfterMillis int64 `json:"inactiveAfterMillis"`
 }
 
-// Firehose is an IOConfig firehose configuration
+// Firehose is an IOConfig firehose configuration.
 type Firehose struct {
 	Type string `json:"type,omitempty"`
 
@@ -139,7 +181,7 @@ type Firehose struct {
 	ShutoffTime string     `json:"shutoffTime,omitempty"`
 }
 
-// CompactionInputSpec
+// CompactionInputSpec is a specification for compaction task.
 type CompactionInputSpec struct {
 	Type string `json:"type"`
 	// CompactionIntervalSpec fields
@@ -149,6 +191,7 @@ type CompactionInputSpec struct {
 	Segments []string `json:"segments,omitempty"`
 }
 
+// MetadataStorageUpdaterJobSpec is a specification of endpoint for HadoopIOConfig.
 type MetadataStorageUpdaterJobSpec struct {
 	Type           string         `json:"type"`
 	ConnectURI     string         `json:"connectURI"`
@@ -162,6 +205,7 @@ type MetadataStorageUpdaterJobSpec struct {
 }
 
 // IOConfig influences how data is read into Druid from a source system.
+// https://druid.apache.org/docs/latest/ingestion/ingestion-spec/#ioconfig
 type IOConfig struct {
 	Type string `json:"type"`
 
@@ -184,23 +228,21 @@ type IOConfig struct {
 	SegmentOutputPath  string                         `json:"segmentOutputPath,omitempty"`
 
 	// KafkaIndexTaskIOConfig / KinesisIndexTaskIOConfig fields
-	Topic              string              `json:"topic,omitempty"`
-	ConsumerProperties *ConsumerProperties `json:"consumerProperties,omitempty"`
-	TaskDuration       string              `json:"taskDuration,omitempty"`
-	Replicas           int                 `json:"replicas,omitempty"`
-	TaskCount          int                 `json:"taskCount,omitempty"`
-	UseEarliestOffset  bool                `json:"useEarliestOffset"`
-
-	AutoScalerConfig *AutoScalerConfig `json:"autoScalerConfig,omitempty"`
-
-	TaskGroupID               int    `json:"taskGroupID,omitempty"`
-	BaseSequenceName          string `json:"baseSequenceName,omitempty"`
-	CompletionTimeout         string `json:"completionTimeout,omitempty"`
-	PollTimeout               int    `json:"pollTimeout,omitempty"`
-	StartDelay                string `json:"startDelay,omitempty"`
-	Period                    string `json:"period,omitempty"`
-	Stream                    string `json:"stream,omitempty"`
-	UseEarliestSequenceNumber bool   `json:"useEarliestSequenceNumber,omitempty"`
+	Topic                     string              `json:"topic,omitempty"`
+	ConsumerProperties        *ConsumerProperties `json:"consumerProperties,omitempty"`
+	TaskDuration              string              `json:"taskDuration,omitempty"`
+	Replicas                  int                 `json:"replicas,omitempty"`
+	TaskCount                 int                 `json:"taskCount,omitempty"`
+	UseEarliestOffset         bool                `json:"useEarliestOffset"`
+	AutoScalerConfig          *AutoScalerConfig   `json:"autoScalerConfig,omitempty"`
+	TaskGroupID               int                 `json:"taskGroupID,omitempty"`
+	BaseSequenceName          string              `json:"baseSequenceName,omitempty"`
+	CompletionTimeout         string              `json:"completionTimeout,omitempty"`
+	PollTimeout               int                 `json:"pollTimeout,omitempty"`
+	StartDelay                string              `json:"startDelay,omitempty"`
+	Period                    string              `json:"period,omitempty"`
+	Stream                    string              `json:"stream,omitempty"`
+	UseEarliestSequenceNumber bool                `json:"useEarliestSequenceNumber,omitempty"`
 
 	// common fields
 	FlattenSpec *FlattenSpec `json:"flattenSpec,omitempty"`
@@ -214,24 +256,35 @@ type ConsumerProperties struct {
 	BootstrapServers string `json:"bootstrap.servers,omitempty"`
 }
 
-// InputFormat specifies kafka messages format type.
-// This can take values 'json', 'protobuf' or 'kafka'.
+// InputFormat specifies kafka messages format type and describes any conversions applied to
+// the input data while parsing.
+// Type can take values 'json', 'protobuf' or 'kafka'.
 type InputFormat struct {
 	Type string `json:"type"`
 
-	// CsvInputFormat fields
+	// FlatTextInputFormat / DelimitedInputFormat fields
+	Delimiter         string   `json:"delimiter,omitempty"`
+	ListDelimiter     string   `json:"listDelimiter,omitempty"`
+	FindColumnsHeader string   `json:"findColumnsHeader,omitempty"`
+	SkipHeaderRows    int      `json:"skipHeaderRows,omitempty"`
+	Columns           []string `json:"columns,omitempty"`
+
+	// JsonInputFormat fields
+	FlattenSpec *FlattenSpec    `json:"flattenSpec,omitempty"`
+	FeatureSpec map[string]bool `json:"featureSpec,omitempty"`
+
+	// Common CsvInputFormat / JsonInputFormat fields
 	KeepNullColumns        bool `json:"keepNullColumns,omitempty"`
 	AssumeNewlineDelimited bool `json:"assumeNewlineDelimited,omitempty"`
 	UseJsonNodeReader      bool `json:"useJsonNodeReader,omitempty"`
 }
 
+// HttpInputSourceConfig is a field of HttpInputSource specification.
 type HttpInputSourceConfig struct {
 	AllowedProtocols []string `json:" allowedProtocols,omitempty"`
 }
 
-type SplittableInputSource struct {
-}
-
+// InputSource  is a specification of the storage system where input data is stored.
 type InputSource struct {
 	Type string `json:"type"`
 
@@ -255,10 +308,12 @@ type InputSource struct {
 
 // TransformSpec is responsible for transforming druid input data
 // after it was read from kafka and after flattenSpec was applied.
+// https://druid.apache.org/docs/latest/ingestion/ingestion-spec#transformspec
 type TransformSpec struct {
 	Transforms TransformSet `json:"transforms"`
 }
 
+// SupervisorStatusPayload is an object representing the status of supervisor.
 type SupervisorStatusPayload struct {
 	Datasource      string `json:"dataSource"`
 	Stream          string `json:"stream"`
@@ -268,13 +323,15 @@ type SupervisorStatusPayload struct {
 	DurationSeconds int    `json:"durationSeconds"`
 }
 
-// SupervisorStatus is a response object of Druid SupervisorService's GetStatus method.
+// SupervisorStatus is a response object containing status of a supervisor alongside
+// with the response metadata.
 type SupervisorStatus struct {
 	SupervisorId   string                   `json:"id"`
 	GenerationTime time.Time                `json:"generationTime"`
 	Payload        *SupervisorStatusPayload `json:"payload"`
 }
 
+// SupervisorState is a short form of supervisor state returned by druid APIs.
 type SupervisorState struct {
 	ID            string `json:"id"`
 	State         string `json:"state"`
@@ -284,15 +341,12 @@ type SupervisorState struct {
 }
 
 type SupervisorStateWithSpec struct {
-	ID            string              `json:"id"`
-	State         string              `json:"state"`
-	DetailedState string              `json:"detailedState"`
-	Healthy       bool                `json:"healthy"`
-	Suspended     bool                `json:"suspended"`
-	Spec          *InputIngestionSpec `json:"spec"`
+	SupervisorState
+	Spec *InputIngestionSpec `json:"spec"`
 }
 
-// defaultKafkaIngestionSpec returns a default InputIngestionSpec.
+// defaultKafkaIngestionSpec returns a default InputIngestionSpec with basic ingestion
+// specification fields initialized.
 func defaultKafkaIngestionSpec() *InputIngestionSpec {
 	spec := &InputIngestionSpec{
 		Type: "kafka",
@@ -394,7 +448,7 @@ func SetInputFormat(format string) IngestionSpecOptions {
 }
 
 // SetBrokers sets the addresses of Kafka brokers. in the list form: 'kafka01:9092,
-// kafka02:9092,kafka03:9092' or as a cluster DNS: ”.
+// kafka02:9092,kafka03:9092' or as a cluster DNS: kafka.default.svc.cluster.local:9092”.
 func SetBrokers(brokers string) IngestionSpecOptions {
 	return func(spec *InputIngestionSpec) {
 		if brokers != "" {

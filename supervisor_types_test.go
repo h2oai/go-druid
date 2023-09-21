@@ -81,8 +81,7 @@ var jsonBasic = `{
         "granularitySpec": {
             "type": "uniform",
             "segmentGranularity": "DAY",
-            "queryGranularity": "none",
-            "rollup": false
+            "queryGranularity": "none"
         }
     },
     "ioConfig": {
