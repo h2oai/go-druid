@@ -6,20 +6,20 @@ import (
 )
 
 const (
-	supervisorPathPrefix             = "druid/indexer/v1/supervisor"
-	supervisorSpecPathPrefix         = "druid/indexer/v1/supervisor/:supervisorId"
-	supervisorAllActivePathPrefix    = "druid/indexer/v1/supervisor?full"
-	supervisorStatusPathPrefix       = "druid/indexer/v1/supervisor/:supervisorId/status"
-	supervisorHistoryAllPathPrefix   = "druid/indexer/v1/supervisor/history"
-	supervisorHistoryPathPrefix      = "druid/indexer/v1/supervisor/:supervisorId/history"
-	supervisorSuspendPathPrefix      = "druid/indexer/v1/supervisor/:supervisorId/suspend"
-	supervisorSuspendAllPathPrefix   = "druid/indexer/v1/supervisor/suspendAll"
-	supervisorResumePathPrefix       = "druid/indexer/v1/supervisor/:supervisorId/resume"
-	supervisorResumeAllPathPrefix    = "druid/indexer/v1/supervisor/resumeAll"
-	supervisorResetPathPrefix        = "druid/indexer/v1/supervisor/:supervisorId/reset"
-	supervisorTerminatePathPrefix    = "druid/indexer/v1/supervisor/:supervisorId/terminate"
-	supervisorTerminateAllPathPrefix = "druid/indexer/v1/supervisor/terminateAll"
-	supervisorShutdownPathPrefix     = "druid/indexer/v1/supervisor/:supervisorId/shutdown"
+	supervisorEndpoint             = "druid/indexer/v1/supervisor"
+	supervisorSpecEndpoint         = "druid/indexer/v1/supervisor/:supervisorId"
+	supervisorAllActiveEndpoint    = "druid/indexer/v1/supervisor?full"
+	supervisorStatusEndpoint       = "druid/indexer/v1/supervisor/:supervisorId/status"
+	supervisorHistoryAllEndpoint   = "druid/indexer/v1/supervisor/history"
+	supervisorHistoryEndpoint      = "druid/indexer/v1/supervisor/:supervisorId/history"
+	supervisorSuspendEndpoint      = "druid/indexer/v1/supervisor/:supervisorId/suspend"
+	supervisorSuspendAllEndpoint   = "druid/indexer/v1/supervisor/suspendAll"
+	supervisorResumeEndpoint       = "druid/indexer/v1/supervisor/:supervisorId/resume"
+	supervisorResumeAllEndpoint    = "druid/indexer/v1/supervisor/resumeAll"
+	supervisorResetEndpoint        = "druid/indexer/v1/supervisor/:supervisorId/reset"
+	supervisorTerminateEndpoint    = "druid/indexer/v1/supervisor/:supervisorId/terminate"
+	supervisorTerminateAllEndpoint = "druid/indexer/v1/supervisor/terminateAll"
+	supervisorShutdownEndpoint     = "druid/indexer/v1/supervisor/:supervisorId/shutdown"
 )
 
 // SupervisorService is a service that submits ingestion tasks to druid supervisor API.
@@ -40,7 +40,7 @@ type TerminateSupervisorResponse struct {
 // CreateOrUpdate submits an ingestion specification to druid Supervisor API with a pre-configured druid client.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#create-or-update-a-supervisor
 func (s *SupervisorService) CreateOrUpdate(spec InputIngestionSpec) (string, error) {
-	r, err := s.client.NewRequest("POST", supervisorPathPrefix, spec)
+	r, err := s.client.NewRequest("POST", supervisorEndpoint, spec)
 	if err != nil {
 		return "", err
 	}
@@ -77,7 +77,7 @@ func (s *SupervisorService) GetActiveStates() ([]SupervisorState, error) {
 // GetSpec calls druid Supervisor Status API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#get-supervisor-specification
 func (s *SupervisorService) GetSpec(supervisorId string) (OutputIngestionSpec, error) {
-	r, err := s.client.NewRequest("GET", applySupervisorId(supervisorSpecPathPrefix, supervisorId), nil)
+	r, err := s.client.NewRequest("GET", applySupervisorId(supervisorSpecEndpoint, supervisorId), nil)
 	var result OutputIngestionSpec
 	if err != nil {
 		return result, err
@@ -92,7 +92,7 @@ func (s *SupervisorService) GetSpec(supervisorId string) (OutputIngestionSpec, e
 // GetStatus calls druid Supervisor service's Get status API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#get-supervisor-status
 func (s *SupervisorService) GetStatus(supervisorId string) (SupervisorStatus, error) {
-	r, err := s.client.NewRequest("GET", applySupervisorId(supervisorStatusPathPrefix, supervisorId), nil)
+	r, err := s.client.NewRequest("GET", applySupervisorId(supervisorStatusEndpoint, supervisorId), nil)
 	var result SupervisorStatus
 	if err != nil {
 		return result, err
@@ -152,7 +152,7 @@ func (s *SupervisorService) Reset(string) (string, error) {
 // Terminate calls druid Supervisor service's Terminate API.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#terminate-a-supervisor
 func (s *SupervisorService) Terminate(supervisorId string) (string, error) {
-	r, err := s.client.NewRequest("POST", applySupervisorId(supervisorTerminatePathPrefix, supervisorId), "")
+	r, err := s.client.NewRequest("POST", applySupervisorId(supervisorTerminateEndpoint, supervisorId), "")
 	if err != nil {
 		return "", err
 	}
