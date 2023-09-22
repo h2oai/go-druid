@@ -39,7 +39,7 @@ func TestSupervisorService(t *testing.T) {
 
 	// Waiting for druid coordinator service to start.
 	err = compose.
-		WaitForService("coordinator", wait.NewHTTPStrategy(processInformationPathPrefix).WithPort("8081/tcp").WithStartupTimeout(30*time.Second)).
+		WaitForService("coordinator", wait.NewHTTPStrategy(processInformationPathPrefix).WithPort("8081/tcp").WithStartupTimeout(60*time.Second)).
 		Up(ctx, tc.Wait(true))
 	assert.NoError(t, err, "coordinator should be up with no error")
 
