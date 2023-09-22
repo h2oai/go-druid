@@ -39,7 +39,7 @@ type TerminateSupervisorResponse struct {
 
 // CreateOrUpdate submits an ingestion specification to druid Supervisor API with a pre-configured druid client.
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#create-or-update-a-supervisor
-func (s *SupervisorService) CreateOrUpdate(spec *InputIngestionSpec) (string, error) {
+func (s *SupervisorService) CreateOrUpdate(spec InputIngestionSpec) (string, error) {
 	r, err := s.client.NewRequest("POST", supervisorEndpoint, spec)
 	if err != nil {
 		return "", err
