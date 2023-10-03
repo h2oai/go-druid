@@ -119,8 +119,8 @@ type Transform struct {
 // SpatialDimension represents single spatial dimension datum.
 // https://druid.apache.org/docs/latest/querying/geo/#spatial-indexing
 type SpatialDimension struct {
-	DimName string   `json:"dimName"`
-	Dims    []string `json:"dims,omitempty"`
+	DimensionName string   `json:"dimName"`
+	Dimensions    []string `json:"dims,omitempty"`
 }
 
 // TransformSet is a unique set of transforms applied to the input.
