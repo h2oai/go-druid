@@ -154,7 +154,6 @@ type DimensionsSpec struct {
 	IncludeAllDimensions bool                   `json:"includeAllDimensions,omitempty"`
 	UseSchemaDiscovery   bool                   `json:"useSchemaDiscovery,omitempty"`
 }
-
 type QueryGranularity struct {
 	Type string `json:"type,omitempty"`
 }
@@ -163,11 +162,12 @@ type QueryGranularity struct {
 // partitioning, truncating timestamps, time chunk segmentation or roll-up.
 // https://druid.apache.org/docs/latest/ingestion/ingestion-spec#granularityspec
 type GranularitySpec struct {
-	Type               string           `json:"type"`
-	SegmentGranularity string           `json:"segmentGranularity,omitempty"`
-	QueryGranularity   QueryGranularity `json:"queryGranularity,omitempty"`
-	Rollup             bool             `json:"rollup,omitempty"`
-	Intervals          []string         `json:"intervals,omitempty"`
+	Type               string `json:"type"`
+	SegmentGranularity string `json:"segmentGranularity,omitempty"`
+	// TODO: this field is problematic as depending on value druid returns string or object
+	QueryGranularity QueryGranularity `json:"queryGranularity,omitempty"`
+	Rollup           bool             `json:"rollup,omitempty"`
+	Intervals        []string         `json:"intervals,omitempty"`
 }
 
 // AutoScalerConfig is part of IOConfig that controls ingestion auto-scaling.
