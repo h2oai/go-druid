@@ -302,14 +302,14 @@ type HttpInputSourceConfig struct {
 	AllowedProtocols []string `json:" allowedProtocols,omitempty"`
 }
 
-// ConnectorConfig is connection configuration for Database
+// ConnectorConfig is connection configuration for Database.
 type ConnectorConfig struct {
 	ConnectURI string `json:"connectURI"`
-	User       string `json:"user,omitempty"`
-	Password   string `json:"password,omitempty"`
+	User       string `json:"user"`
+	Password   string `json:"password"`
 }
 
-// Database configuration for InputSource "sql"
+// Database configuration for InputSource "sql".
 type Database struct {
 	Type            string           `json:"type"`
 	ConnectorConfig *ConnectorConfig `json:"connectorConfig"`
@@ -445,7 +445,7 @@ func SetType(stype string) IngestionSpecOptions {
 	}
 }
 
-// SetType sets the type of the supervisor (IOConfig).
+// SetIOConfigType sets the type of the supervisor IOConfig.
 func SetIOConfigType(ioctype string) IngestionSpecOptions {
 	return func(spec *InputIngestionSpec) {
 		if ioctype != "" {
@@ -546,7 +546,7 @@ func SetGranularitySpec(segmentGranularity, queryGranularity string, rollup bool
 	}
 }
 
-// SetSqlInputSource configures input source dimensions.
+// SetSqlInputSource configures sql input source.
 func SetSqlInputSource(dbType, connectURI, user, password string, sqls []string) IngestionSpecOptions {
 	return func(spec *InputIngestionSpec) {
 		spec.IOConfig.InputSource = &InputSource{

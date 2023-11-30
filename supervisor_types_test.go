@@ -96,27 +96,25 @@ var jsonBasic = `{
 }`
 
 func TestKafkaIngestionSpec_MarshalJSON(t *testing.T) {
-	t.Run("jsonBasic", func(t *testing.T) {
-		spec := NewIngestionSpec(
-			SetDataSource("test_datasource"),
-			SetTopic("test_topic"),
-			SetBrokers("test_brokers"),
-			SetDimensions([]any{"ts", "user_name", "payload"}),
-		)
-		actual, err := json.MarshalIndent(spec, "", "    ")
-		if err != nil {
-			t.Fatalf("unexpected error while marshalling: %v", err)
-		}
-		expected := []byte(jsonBasic)
-		require.Equal(t, string(expected), string(actual), fmt.Sprintf("expected: %s\nactual: %s", string(expected), string(actual)))
+	spec := NewIngestionSpec(
+		SetDataSource("test_datasource"),
+		SetTopic("test_topic"),
+		SetBrokers("test_brokers"),
+		SetDimensions([]any{"ts", "user_name", "payload"}),
+	)
+	actual, err := json.Marshal(spec)
+	if err != nil {
+		t.Fatalf("unexpected error while marshalling: %v", err)
+	}
+	expected := []byte(jsonBasic)
+	require.JSONEq(t, string(expected), string(actual), fmt.Sprintf("expected: %s\nactual: %s", string(expected), string(actual)))
 
-		var checkSpec *InputIngestionSpec
-		err = json.Unmarshal(actual, &checkSpec)
-		if err != nil {
-			t.Fatalf("unexpected error while unmarshalling: %v", err)
-		}
-		require.Equal(t, spec, checkSpec)
-	})
+	var checkSpec *InputIngestionSpec
+	err = json.Unmarshal(actual, &checkSpec)
+	if err != nil {
+		t.Fatalf("unexpected error while unmarshalling: %v", err)
+	}
+	require.Equal(t, spec, checkSpec)
 }
 
 var jsonWithTypedDimensions = `{
@@ -165,23 +163,21 @@ var jsonWithTypedDimensions = `{
 }`
 
 func TestIngestionSpecWithTypedDimensions_MarshalJSON(t *testing.T) {
-	t.Run("jsonWithTypedDimensions", func(t *testing.T) {
-		spec := NewIngestionSpec(
-			SetDataSource("test_datasource"),
-			SetTopic("test_topic"),
-			SetBrokers("test_brokers"),
-			SetDimensions([]any{
-				Dimension{Type: "string", Name: "ts"},
-				Dimension{Type: "json", Name: "payload"},
-			}),
-		)
-		actual, err := json.MarshalIndent(spec, "", "    ")
-		if err != nil {
-			t.Fatalf("unexpected error while marshalling: %v", err)
-		}
-		expected := []byte(jsonWithTypedDimensions)
-		require.Equal(t, string(expected), string(actual), fmt.Sprintf("expected: %s\nactual: %s", string(expected), string(actual)))
-	})
+	spec := NewIngestionSpec(
+		SetDataSource("test_datasource"),
+		SetTopic("test_topic"),
+		SetBrokers("test_brokers"),
+		SetDimensions([]any{
+			Dimension{Type: "string", Name: "ts"},
+			Dimension{Type: "json", Name: "payload"},
+		}),
+	)
+	actual, err := json.Marshal(spec)
+	if err != nil {
+		t.Fatalf("unexpected error while marshalling: %v", err)
+	}
+	expected := []byte(jsonWithTypedDimensions)
+	require.JSONEq(t, string(expected), string(actual), fmt.Sprintf("expected: %s\nactual: %s", string(expected), string(actual)))
 }
 
 var jsonWithSqlInputSource = `{
@@ -238,33 +234,31 @@ var jsonWithSqlInputSource = `{
 }`
 
 func TestIngestionSpecWithSqlInputSource_MarshalJSON(t *testing.T) {
-	t.Run("jsonBasicWithSq", func(t *testing.T) {
-		spec := NewIngestionSpec(
-			SetType("index_parallel"),
-			SetIOConfigType("index_parallel"),
-			SetDataSource("test_datasource"),
-			SetDimensions([]any{"ts", "user_name", "payload"}),
-			SetSqlInputSource("mysql",
-				"jdbc:mysql://host:port/schema",
-				"username",
-				"password",
-				[]string{
-					"SELECT * FROM table1 WHERE timestamp BETWEEN '2013-01-01 00:00:00' AND '2013-01-01 11:59:59'",
-					"SELECT * FROM table2 WHERE timestamp BETWEEN '2013-01-01 00:00:00' AND '2013-01-01 11:59:59'",
-				}),
-		)
-		actual, err := json.MarshalIndent(spec, "", "    ")
-		if err != nil {
-			t.Fatalf("unexpected error while marshalling: %v", err)
-		}
-		expected := []byte(jsonWithSqlInputSource)
-		require.Equal(t, string(expected), string(actual), fmt.Sprintf("expected: %s\nactual: %s", string(expected), string(actual)))
+	spec := NewIngestionSpec(
+		SetType("index_parallel"),
+		SetIOConfigType("index_parallel"),
+		SetDataSource("test_datasource"),
+		SetDimensions([]any{"ts", "user_name", "payload"}),
+		SetSqlInputSource("mysql",
+			"jdbc:mysql://host:port/schema",
+			"username",
+			"password",
+			[]string{
+				"SELECT * FROM table1 WHERE timestamp BETWEEN '2013-01-01 00:00:00' AND '2013-01-01 11:59:59'",
+				"SELECT * FROM table2 WHERE timestamp BETWEEN '2013-01-01 00:00:00' AND '2013-01-01 11:59:59'",
+			}),
+	)
+	actual, err := json.Marshal(spec)
+	if err != nil {
+		t.Fatalf("unexpected error while marshalling: %v", err)
+	}
+	expected := []byte(jsonWithSqlInputSource)
+	require.JSONEq(t, string(expected), string(actual), fmt.Sprintf("expected: %s\nactual: %s", string(expected), string(actual)))
 
-		var checkSpec *InputIngestionSpec
-		err = json.Unmarshal(actual, &checkSpec)
-		if err != nil {
-			t.Fatalf("unexpected error while unmarshalling: %v", err)
-		}
-		require.Equal(t, spec, checkSpec)
-	})
+	var checkSpec *InputIngestionSpec
+	err = json.Unmarshal(actual, &checkSpec)
+	if err != nil {
+		t.Fatalf("unexpected error while unmarshalling: %v", err)
+	}
+	require.Equal(t, spec, checkSpec)
 }
