@@ -546,8 +546,8 @@ func SetGranularitySpec(segmentGranularity, queryGranularity string, rollup bool
 	}
 }
 
-// SetSqlInputSource configures sql input source.
-func SetSqlInputSource(dbType, connectURI, user, password string, sqls []string) IngestionSpecOptions {
+// SetSQLInputSource configures sql input source.
+func SetSQLInputSource(dbType, connectURI, user, password string, sqls []string) IngestionSpecOptions {
 	return func(spec *InputIngestionSpec) {
 		spec.IOConfig.InputSource = &InputSource{
 			Type: "sql",

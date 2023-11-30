@@ -239,7 +239,7 @@ func TestIngestionSpecWithSqlInputSource_MarshalJSON(t *testing.T) {
 		SetIOConfigType("index_parallel"),
 		SetDataSource("test_datasource"),
 		SetDimensions([]any{"ts", "user_name", "payload"}),
-		SetSqlInputSource("mysql",
+		SetSQLInputSource("mysql",
 			"jdbc:mysql://host:port/schema",
 			"username",
 			"password",
