@@ -74,9 +74,9 @@ var jsonBasic = `{
             ]
         },
         "granularitySpec": {
-            "queryGranularity": { "type": "none" },
+			"type": "uniform",
             "segmentGranularity": "DAY",
-            "queryGranularity": "none"
+            "queryGranularity": { "type": "none" }
         }
     },
     "ioConfig": {
@@ -141,9 +141,9 @@ var jsonWithTypedDimensions = `{
             ]
         },
         "granularitySpec": {
-            "type": "uniform",
+			"type": "uniform",
             "segmentGranularity": "DAY",
-            "queryGranularity": "none"
+            "queryGranularity": {"type": "none"}
         }
     },
     "ioConfig": {
@@ -193,15 +193,20 @@ var jsonWithSqlInputSource = `{
         },
         "dimensionsSpec": {
             "dimensions": [
-                "ts",
-                "user_name",
-                "payload"
+                {
+                    "type": "string",
+                    "name": "ts"
+                },
+                {
+                    "type": "json",
+                    "name": "payload"
+                }
             ]
         },
         "granularitySpec": {
-            "type": "uniform",
-            "segmentGranularity": "DAY",
-            "queryGranularity": "none"
+			"type": "uniform",
+			"segmentGranularity": "DAY",
+            "queryGranularity: {type": "none"}
         }
     },
     "ioConfig": {
@@ -253,6 +258,10 @@ func TestIngestionSpecWithSqlInputSource_MarshalJSON(t *testing.T) {
 		t.Fatalf("unexpected error while marshalling: %v", err)
 	}
 	expected := []byte(jsonWithSqlInputSource)
+
+	fmt.Println("Expected: " + string(expected))
+	fmt.Println("Actual  : " + string(actual))
+
 	require.JSONEq(t, string(expected), string(actual), fmt.Sprintf("expected: %s\nactual: %s", string(expected), string(actual)))
 
 	var checkSpec *InputIngestionSpec
