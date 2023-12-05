@@ -74,7 +74,7 @@ var jsonBasic = `{
             ]
         },
         "granularitySpec": {
-            "type": "uniform",
+            "queryGranularity": { "type": "none" },
             "segmentGranularity": "DAY",
             "queryGranularity": "none"
         }
