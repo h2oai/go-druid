@@ -144,7 +144,7 @@ type DimensionExclusionsSet []string
 // or applying aggregations.
 // https://druid.apache.org/docs/latest/ingestion/ingestion-spec#dimensionsspec
 type DimensionsSpec struct {
-	Dimensions           DimensionsSet          `json:"dimensions,omitempty"`
+	Dimensions           DimensionSet           `json:"dimensions,omitempty"`
 	DimensionExclusions  DimensionExclusionsSet `json:"dimensionExclusions,omitempty"`
 	SpatialDimensions    SpatialDimensionSet    `json:"spatialDimensions,omitempty"`
 	IncludeAllDimensions bool                   `json:"includeAllDimensions,omitempty"`
@@ -509,7 +509,7 @@ func SetTaskDuration(duration string) IngestionSpecOptions {
 }
 
 // SetDimensions sets druid datasource dimensions.
-func SetDimensions(dimensions DimensionsSet) IngestionSpecOptions {
+func SetDimensions(dimensions DimensionSet) IngestionSpecOptions {
 	return func(spec *InputIngestionSpec) {
 		spec.DataSchema.DimensionsSpec.Dimensions = dimensions
 	}
