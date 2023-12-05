@@ -34,7 +34,7 @@ func TestSupervisorService(t *testing.T) {
 		SetBrokers("telemetry-kafka.skaffold-telemetry-victorzaytsev.svc.cluster.local:9092"),
 		SetTopic("test-topic"),
 		SetDataSource("test-datasource"),
-		SetDimensions([]Dimension{{Name: "dim1"}, {Name: "dim2"}}))
+		SetDimensions(DimensionSet{Dimension{Name: "dim1"}, Dimension{Name: "dim2"}}))
 	assert.NoError(t, err, "error should be nil")
 	assert.NotNil(t, spec, "specification should not be nil")
 
