@@ -193,20 +193,15 @@ var jsonWithSqlInputSource = `{
         },
         "dimensionsSpec": {
             "dimensions": [
-                {
-                    "type": "string",
-                    "name": "ts"
-                },
-                {
-                    "type": "json",
-                    "name": "payload"
-                }
+                "ts",
+                "user_name",
+                "payload"
             ]
         },
         "granularitySpec": {
 			"type": "uniform",
 			"segmentGranularity": "DAY",
-            "queryGranularity: {type": "none"}
+            "queryGranularity": {"type": "none"}
         }
     },
     "ioConfig": {
@@ -258,9 +253,6 @@ func TestIngestionSpecWithSqlInputSource_MarshalJSON(t *testing.T) {
 		t.Fatalf("unexpected error while marshalling: %v", err)
 	}
 	expected := []byte(jsonWithSqlInputSource)
-
-	fmt.Println("Expected: " + string(expected))
-	fmt.Println("Actual  : " + string(actual))
 
 	require.JSONEq(t, string(expected), string(actual), fmt.Sprintf("expected: %s\nactual: %s", string(expected), string(actual)))
 
