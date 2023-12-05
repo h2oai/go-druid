@@ -1,7 +1,5 @@
 package druid
 
-import "time"
-
 // InputIngestionSpec is the root-level type defining an ingestion spec used
 // by Apache Druid.
 type InputIngestionSpec struct {
@@ -106,7 +104,7 @@ type FieldList []Field
 type Field struct {
 	Type string `json:"type"`
 	Name string `json:"name"`
-	Expr string `json:"expression"`
+	Expr string `json:"expr"`
 }
 
 // Transform defines a single filed transformation of the TransformSpec.
@@ -126,16 +124,14 @@ type SpatialDimension struct {
 // TransformSet is a unique set of transforms applied to the input.
 type TransformSet []Transform
 
-// Dimension represents druid dimension.
-type Dimension struct {
-	Type               string `json:"type,omitempty"`
-	Name               string `json:"name,omitempty"`
-	MultiValueHandling string `json:"multiValueHandling,omitempty"`
-	CreateBitmapIndex  bool   `json:"createBitmapIndex,omitempty"`
-}
+// DimensionSet is a unique set of druid datasource dimensions(labels).
+type DimensionSet []any
 
-// DimensionsSet is a unique set of druid datasource dimensions(labels).
-type DimensionsSet []Dimension
+// Dimension is a typed definition of a datasource dimension.
+type Dimension struct {
+	Type string `json:"type"`
+	Name string `json:"name"`
+}
 
 // SpatialDimensionSet is a unique set of druid datasource spatial dimensions.
 type SpatialDimensionSet []SpatialDimension
@@ -313,6 +309,19 @@ type HttpInputSourceConfig struct {
 	AllowedProtocols []string `json:" allowedProtocols,omitempty"`
 }
 
+// ConnectorConfig is connection configuration for Database.
+type ConnectorConfig struct {
+	ConnectURI string `json:"connectURI"`
+	User       string `json:"user"`
+	Password   string `json:"password"`
+}
+
+// Database configuration for InputSource "sql".
+type Database struct {
+	Type            string           `json:"type"`
+	ConnectorConfig *ConnectorConfig `json:"connectorConfig"`
+}
+
 // InputSource  is a specification of the storage system where input data is stored.
 type InputSource struct {
 	Type string `json:"type"`
@@ -333,6 +342,10 @@ type InputSource struct {
 
 	// CombiningInputSource fields
 	Delegates []InputSource `json:"delegates,omitempty"`
+
+	// SqlInputSource
+	SQLs     []string  `json:"sqls,omitempty"`
+	Database *Database `json:"database,omitempty"`
 }
 
 // TransformSpec is responsible for transforming druid input data
@@ -357,7 +370,7 @@ type SupervisorStatusPayload struct {
 // with the response metadata.
 type SupervisorStatus struct {
 	SupervisorId   string                   `json:"id"`
-	GenerationTime time.Time                `json:"generationTime"`
+	GenerationTime string                   `json:"generationTime"`
 	Payload        *SupervisorStatusPayload `json:"payload"`
 }
 
@@ -387,20 +400,10 @@ func defaultKafkaIngestionSpec() *InputIngestionSpec {
 				Format: "auto",
 			},
 			TransformSpec: &TransformSpec{
-				Transforms: []Transform{
-					{
-						Type: "expression",
-						Name: "payload",
-						Expr: "parse_json(payload)",
-					},
-				},
+				Transforms: []Transform{},
 			},
 			DimensionsSpec: &DimensionsSpec{
-				Dimensions: DimensionsSet{
-					{Name: "id"},
-					{Name: "ts"},
-					{Name: "payload"},
-				},
+				Dimensions: DimensionSet{},
 			},
 			GranularitySpec: &GranularitySpec{
 				Type:               "uniform",
@@ -415,7 +418,7 @@ func defaultKafkaIngestionSpec() *InputIngestionSpec {
 			InputFormat: &InputFormat{
 				Type: "json",
 			},
-			TaskDuration: "PT30M",
+			TaskDuration: "PT1H",
 			ConsumerProperties: &ConsumerProperties{
 				BootstrapServers: "",
 			},
@@ -446,6 +449,15 @@ func SetType(stype string) IngestionSpecOptions {
 	return func(spec *InputIngestionSpec) {
 		if stype != "" {
 			spec.Type = stype
+		}
+	}
+}
+
+// SetIOConfigType sets the type of the supervisor IOConfig.
+func SetIOConfigType(ioctype string) IngestionSpecOptions {
+	return func(spec *InputIngestionSpec) {
+		if ioctype != "" {
+			spec.IOConfig.Type = ioctype
 		}
 	}
 }
@@ -538,6 +550,24 @@ func SetGranularitySpec(segmentGranularity string, queryGranularity QueryGranula
 			SegmentGranularity: segmentGranularity,
 			QueryGranularity:   queryGranularity,
 			Rollup:             rollup,
+		}
+	}
+}
+
+// SetSQLInputSource configures sql input source.
+func SetSQLInputSource(dbType, connectURI, user, password string, sqls []string) IngestionSpecOptions {
+	return func(spec *InputIngestionSpec) {
+		spec.IOConfig.InputSource = &InputSource{
+			Type: "sql",
+			SQLs: sqls,
+			Database: &Database{
+				Type: dbType,
+				ConnectorConfig: &ConnectorConfig{
+					ConnectURI: connectURI,
+					User:       user,
+					Password:   password,
+				},
+			},
 		}
 	}
 }
