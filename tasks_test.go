@@ -17,7 +17,7 @@ func TestTaskService(t *testing.T) {
 
 	// Set up cleanup for druid containers.
 	t.Cleanup(func() {
-		assert.NoError(t, compose.Down(context.Background(), tc.RemoveOrphans(true), tc.RemoveImagesLocal), "compose.Down()")
+		assert.NoError(t, compose.Down(context.Background(), tc.RemoveOrphans(true), tc.RemoveVolumes(true), tc.RemoveImagesLocal), "compose.Down()")
 	})
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -33,6 +33,7 @@ func TestTaskService(t *testing.T) {
 	var spec = NewTaskIngestionSpec(
 		SetTaskType("index_parallel"),
 		SetTaskDataSource("test-datasource"),
+		SetTuningConfig("index_parallel", 25000, 5000000),
 	)
 	assert.NoError(t, err, "error should be nil")
 	assert.NotNil(t, spec, "specification should not be nil")

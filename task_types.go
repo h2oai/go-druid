@@ -42,7 +42,7 @@ func defaultTaskIngestionSpec() *TaskIngestionSpec {
 		Type: "index_parallel",
 		Spec: &IngestionSpecData{
 			DataSchema: &DataSchema{
-				DataSource: "",
+				DataSource: "some_datasource",
 				TimeStampSpec: &TimestampSpec{
 					Column: "ts",
 					Format: "auto",
@@ -59,19 +59,23 @@ func defaultTaskIngestionSpec() *TaskIngestionSpec {
 			IOConfig: &IOConfig{
 				Type: "index_parallel",
 				InputSource: &InputSource{
-					Type: "inline",
-					Data: "",
+					Type: "sql",
+					Database: &Database{
+						Type: "postgresql",
+						ConnectorConfig: &ConnectorConfig{
+							ConnectURI: "jdbc:postgresql://host:port/schema",
+							User:       "user",
+							Password:   "password",
+						},
+					},
+					SQLs: []string{"SELECT * FROM some_table"},
 				},
 				InputFormat: &InputFormat{
-					Type:              "csv",
-					FindColumnsHeader: "true",
-					Columns:           []string{},
+					Type: "json",
 				},
 			},
 			TuningConfig: &TuningConfig{
-				Type:              "index_parallel",
-				MaxRowsPerSegment: 5000000,
-				MaxRowsInMemory:   25000,
+				Type: "index_parallel",
 			},
 		},
 	}
@@ -95,6 +99,17 @@ func SetTaskDataSource(datasource string) TaskIngestionSpecOptions {
 	return func(spec *TaskIngestionSpec) {
 		if datasource != "" {
 			spec.Spec.DataSchema.DataSource = datasource
+		}
+	}
+}
+
+// SetTuningConfig sets the type of the supervisor (IOConfig).
+func SetTuningConfig(ttype string, maxRowsInMemory, maxRowsPerSegment int) TaskIngestionSpecOptions {
+	return func(spec *TaskIngestionSpec) {
+		if ttype != "" {
+			spec.Spec.TuningConfig.Type = ttype
+			spec.Spec.TuningConfig.MaxRowsInMemory = maxRowsInMemory
+			spec.Spec.TuningConfig.MaxRowsPerSegment = maxRowsPerSegment
 		}
 	}
 }
