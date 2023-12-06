@@ -161,9 +161,9 @@ type GranularitySpec struct {
 	Type               string `json:"type"`
 	SegmentGranularity string `json:"segmentGranularity,omitempty"`
 	// TODO: this field is problematic as depending on value druid returns string or object
-	QueryGranularity QueryGranularity `json:"queryGranularity,omitempty"`
-	Rollup           bool             `json:"rollup,omitempty"`
-	Intervals        []string         `json:"intervals,omitempty"`
+	QueryGranularity any      `json:"queryGranularity,omitempty"`
+	Rollup           bool     `json:"rollup,omitempty"`
+	Intervals        []string `json:"intervals,omitempty"`
 }
 
 // AutoScalerConfig is part of IOConfig that controls ingestion auto-scaling.
@@ -408,7 +408,7 @@ func defaultKafkaIngestionSpec() *InputIngestionSpec {
 			GranularitySpec: &GranularitySpec{
 				Type:               "uniform",
 				SegmentGranularity: "DAY",
-				QueryGranularity:   QueryGranularity{Type: "none"},
+				QueryGranularity:   "none",
 				Rollup:             false,
 			},
 		},

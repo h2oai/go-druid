@@ -28,10 +28,10 @@ func TestSupervisorService(t *testing.T) {
 
 	// Set up druid service and client.
 	var druidOpts []ClientOption
-	d, err := NewClient("http://localhost:8081", druidOpts...)
+	d, err := NewClient("http://localhost:8888", druidOpts...)
 	assert.NoError(t, err, "error should be nil")
 	var spec = NewIngestionSpec(SetType("kafka"),
-		SetBrokers("telemetry-kafka.skaffold-telemetry-victorzaytsev.svc.cluster.local:9092"),
+		SetBrokers("kafka:9092"),
 		SetTopic("test-topic"),
 		SetDataSource("test-datasource"),
 		SetDimensions(DimensionSet{Dimension{Name: "dim1"}, Dimension{Name: "dim2"}}))

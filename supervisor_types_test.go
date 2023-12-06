@@ -76,7 +76,7 @@ var jsonBasic = `{
         "granularitySpec": {
 			"type": "uniform",
             "segmentGranularity": "DAY",
-            "queryGranularity": { "type": "none" }
+            "queryGranularity":  "none"
         }
     },
     "ioConfig": {
@@ -143,7 +143,7 @@ var jsonWithTypedDimensions = `{
         "granularitySpec": {
 			"type": "uniform",
             "segmentGranularity": "DAY",
-            "queryGranularity": {"type": "none"}
+            "queryGranularity": "none"
         }
     },
     "ioConfig": {
@@ -201,7 +201,7 @@ var jsonWithSqlInputSource = `{
         "granularitySpec": {
 			"type": "uniform",
 			"segmentGranularity": "DAY",
-            "queryGranularity": {"type": "none"}
+            "queryGranularity": "none"
         }
     },
     "ioConfig": {
