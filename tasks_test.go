@@ -54,6 +54,45 @@ func triggerIngestionTask(d *Client, dataSourceName string, entries []TestDO) (s
 	return taskID, err
 }
 
+func awaitTaskCompletion(client *Client, taskID string) error {
+	for range time.Tick(100 * time.Millisecond) {
+		res, err := client.Tasks().GetStatus(taskID)
+		if err != nil {
+			return err
+		}
+
+		if res.Status.Status == "RUNNING" {
+			continue
+		}
+		break
+	}
+	return nil
+}
+
+func runInlineIngestionTask(client *Client, dataSourceName string, entries []TestDO, recordsCount int) error {
+	taskID, err := triggerIngestionTask(client, dataSourceName, entries)
+	if err != nil {
+		return err
+	}
+
+	err = awaitTaskCompletion(client, taskID)
+	if err != nil {
+		return err
+	}
+
+	err = client.Metadata().AwaitDataSourceAvailable(dataSourceName)
+	if err != nil {
+		return err
+	}
+
+	err = client.Metadata().AwaitRecordsCount(dataSourceName, recordsCount)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func TestTaskService(t *testing.T) {
 	// Set up druid containers using docker-compose.
 	compose, err := tc.NewDockerCompose("testdata/docker-compose.yaml")
@@ -83,7 +122,7 @@ func TestTaskService(t *testing.T) {
 		Up(ctx, tc.Wait(true))
 	assert.NoError(t, err, "coordinator should be up with no error")
 
-	// Test create supervisor -> get status -> terminate sequence.
-	triggerIngestionTask(d, "test-datasource", testObjects)
+	// Test create ingestion task -> get status -> terminate sequence.
+	runInlineIngestionTask(d, "test-datasource", testObjects, 2)
 	assert.NoError(t, err, "error should be nil")
 }

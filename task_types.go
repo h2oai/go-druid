@@ -35,7 +35,7 @@ type TaskIngestionSpec struct {
 	Spec *IngestionSpecData `json:"spec"`
 }
 
-// defaultKafkaIngestionSpec returns a default InputIngestionSpec with basic ingestion
+// defaultTaskIngestionSpec returns a default TaskIngestionSpec with basic ingestion
 // specification fields initialized.
 func defaultTaskIngestionSpec() *TaskIngestionSpec {
 	spec := &TaskIngestionSpec{
@@ -72,7 +72,7 @@ func defaultTaskIngestionSpec() *TaskIngestionSpec {
 							Password:   "password",
 						},
 					},
-					SQLs: []string{"SELECT * FROM druid"},
+					SQLs: []string{},
 				},
 				InputFormat: &InputFormat{
 					Type: "json",
@@ -86,10 +86,10 @@ func defaultTaskIngestionSpec() *TaskIngestionSpec {
 	return spec
 }
 
-// IngestionSpecOptions allows for configuring a InputIngestionSpec.
+// TaskIngestionSpecOptions allows for configuring a TaskIngestionSpec.
 type TaskIngestionSpecOptions func(*TaskIngestionSpec)
 
-// SetType sets the type of the supervisor (IOConfig).
+// SetTaskType sets the type of the task IOConfig.
 func SetTaskType(stype string) TaskIngestionSpecOptions {
 	return func(spec *TaskIngestionSpec) {
 		if stype != "" {
@@ -98,7 +98,7 @@ func SetTaskType(stype string) TaskIngestionSpecOptions {
 	}
 }
 
-// SetType sets the type of the supervisor (IOConfig).
+// SetTaskDataSource sets the destination datasource of the task IOConfig.
 func SetTaskDataSource(datasource string) TaskIngestionSpecOptions {
 	return func(spec *TaskIngestionSpec) {
 		if datasource != "" {
@@ -107,7 +107,7 @@ func SetTaskDataSource(datasource string) TaskIngestionSpecOptions {
 	}
 }
 
-// SetTuningConfig sets the type of the supervisor (IOConfig).
+// SetTaskTuningConfig sets the tuning configuration the task IOConfig.
 func SetTaskTuningConfig(typ string, maxRowsInMemory, maxRowsPerSegment int) TaskIngestionSpecOptions {
 	return func(spec *TaskIngestionSpec) {
 		if typ != "" {
@@ -118,14 +118,14 @@ func SetTaskTuningConfig(typ string, maxRowsInMemory, maxRowsPerSegment int) Tas
 	}
 }
 
-// SetDimensions sets druid datasource dimensions.
+// SetTaskDataDimensions sets druid datasource dimensions.
 func SetTaskDataDimensions(dimensions DimensionSet) TaskIngestionSpecOptions {
 	return func(spec *TaskIngestionSpec) {
 		spec.Spec.DataSchema.DimensionsSpec.Dimensions = dimensions
 	}
 }
 
-// SetSQLInputSource configures sql input source.
+// SetTaskSQLInputSource configures sql input source for the task based ingestion.
 func SetTaskSQLInputSource(typ, connectURI, user, password string, sqls []string) TaskIngestionSpecOptions {
 	return func(spec *TaskIngestionSpec) {
 		spec.Spec.IOConfig.InputSource = &InputSource{
@@ -143,7 +143,7 @@ func SetTaskSQLInputSource(typ, connectURI, user, password string, sqls []string
 	}
 }
 
-// SetTaskIOConfigType sets the type of the supervisor IOConfig.
+// SetTaskIOConfigType sets the type of the task IOConfig.
 func SetTaskIOConfigType(typ string) TaskIngestionSpecOptions {
 	return func(spec *TaskIngestionSpec) {
 		if typ != "" {
@@ -152,7 +152,7 @@ func SetTaskIOConfigType(typ string) TaskIngestionSpecOptions {
 	}
 }
 
-// SetTaskInputFormat
+// SetTaskInputFormat configures input format for the task based ingestion.
 func SetTaskInputFormat(typ string, findColumnsHeader string, columns []string) TaskIngestionSpecOptions {
 	return func(spec *TaskIngestionSpec) {
 		spec.Spec.IOConfig.InputFormat.Type = typ
@@ -161,6 +161,7 @@ func SetTaskInputFormat(typ string, findColumnsHeader string, columns []string) 
 	}
 }
 
+// SetTaskInlineInputData configures inline data for the task based ingestion.
 func SetTaskInlineInputData(data string) TaskIngestionSpecOptions {
 	return func(spec *TaskIngestionSpec) {
 		spec.Spec.IOConfig.InputSource.Type = "inline"
@@ -168,8 +169,7 @@ func SetTaskInlineInputData(data string) TaskIngestionSpecOptions {
 	}
 }
 
-// NewTaskIngestionSpec returns a default TaskIngestionSpec and applies any
-// options passed to it.
+// NewTaskIngestionSpec returns a default TaskIngestionSpec and applies any options passed to it.
 func NewTaskIngestionSpec(options ...TaskIngestionSpecOptions) *TaskIngestionSpec {
 	spec := defaultTaskIngestionSpec()
 	for _, fn := range options {

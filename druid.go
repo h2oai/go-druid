@@ -292,6 +292,10 @@ func (c *Client) Tasks() *TasksService {
 	return &TasksService{client: c}
 }
 
+func (c *Client) Metadata() *MetadataService {
+	return &MetadataService{client: c}
+}
+
 func WithBasicAuth(username, password string) ClientOption {
 	return func(opts *clientOptions) {
 		opts.username = username
