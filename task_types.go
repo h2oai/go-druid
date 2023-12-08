@@ -53,7 +53,11 @@ func defaultTaskIngestionSpec() *TaskIngestionSpec {
 					QueryGranularity:   "none",
 				},
 				DimensionsSpec: &DimensionsSpec{
-					Dimensions: DimensionSet{},
+					UseSchemaDiscovery: true,
+					Dimensions:         DimensionSet{},
+				},
+				TransformSpec: &TransformSpec{
+					Transforms: []Transform{},
 				},
 			},
 			IOConfig: &IOConfig{
@@ -68,7 +72,7 @@ func defaultTaskIngestionSpec() *TaskIngestionSpec {
 							Password:   "password",
 						},
 					},
-					SQLs: []string{"SELECT * FROM some_table"},
+					SQLs: []string{"SELECT * FROM druid"},
 				},
 				InputFormat: &InputFormat{
 					Type: "json",
@@ -104,13 +108,63 @@ func SetTaskDataSource(datasource string) TaskIngestionSpecOptions {
 }
 
 // SetTuningConfig sets the type of the supervisor (IOConfig).
-func SetTuningConfig(ttype string, maxRowsInMemory, maxRowsPerSegment int) TaskIngestionSpecOptions {
+func SetTaskTuningConfig(typ string, maxRowsInMemory, maxRowsPerSegment int) TaskIngestionSpecOptions {
 	return func(spec *TaskIngestionSpec) {
-		if ttype != "" {
-			spec.Spec.TuningConfig.Type = ttype
+		if typ != "" {
+			spec.Spec.TuningConfig.Type = typ
 			spec.Spec.TuningConfig.MaxRowsInMemory = maxRowsInMemory
 			spec.Spec.TuningConfig.MaxRowsPerSegment = maxRowsPerSegment
 		}
+	}
+}
+
+// SetDimensions sets druid datasource dimensions.
+func SetTaskDataDimensions(dimensions DimensionSet) TaskIngestionSpecOptions {
+	return func(spec *TaskIngestionSpec) {
+		spec.Spec.DataSchema.DimensionsSpec.Dimensions = dimensions
+	}
+}
+
+// SetSQLInputSource configures sql input source.
+func SetTaskSQLInputSource(typ, connectURI, user, password string, sqls []string) TaskIngestionSpecOptions {
+	return func(spec *TaskIngestionSpec) {
+		spec.Spec.IOConfig.InputSource = &InputSource{
+			Type: "sql",
+			SQLs: sqls,
+			Database: &Database{
+				Type: typ,
+				ConnectorConfig: &ConnectorConfig{
+					ConnectURI: connectURI,
+					User:       user,
+					Password:   password,
+				},
+			},
+		}
+	}
+}
+
+// SetTaskIOConfigType sets the type of the supervisor IOConfig.
+func SetTaskIOConfigType(typ string) TaskIngestionSpecOptions {
+	return func(spec *TaskIngestionSpec) {
+		if typ != "" {
+			spec.Spec.IOConfig.Type = typ
+		}
+	}
+}
+
+// SetTaskInputFormat
+func SetTaskInputFormat(typ string, findColumnsHeader string, columns []string) TaskIngestionSpecOptions {
+	return func(spec *TaskIngestionSpec) {
+		spec.Spec.IOConfig.InputFormat.Type = typ
+		spec.Spec.IOConfig.InputFormat.FindColumnsHeader = findColumnsHeader
+		spec.Spec.IOConfig.InputFormat.Columns = columns
+	}
+}
+
+func SetTaskInlineInputData(data string) TaskIngestionSpecOptions {
+	return func(spec *TaskIngestionSpec) {
+		spec.Spec.IOConfig.InputSource.Type = "inline"
+		spec.Spec.IOConfig.InputSource.Data = data
 	}
 }
 

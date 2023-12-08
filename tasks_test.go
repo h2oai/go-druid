@@ -1,14 +1,58 @@
 package druid
 
 import (
+	"bytes"
 	"context"
 	"testing"
 	"time"
 
+	"github.com/gocarina/gocsv"
+	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx/types"
 	"github.com/stretchr/testify/assert"
 	tc "github.com/testcontainers/testcontainers-go/modules/compose"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
+
+// TestDO represents entry with payload.
+type TestDO struct {
+	Timestamp time.Time      `db:"ts"`
+	Id        uuid.UUID      `db:"id"` // output only
+	Payload   types.JSONText `db:"payload"`
+}
+
+var testObjects = []TestDO{
+	{
+		Id:        uuid.New(),
+		Timestamp: time.Now(),
+		Payload:   types.JSONText("{\"test\": \"json\"}"),
+	},
+	{
+		Id:        uuid.New(),
+		Timestamp: time.Now().Add(time.Hour),
+		Payload:   types.JSONText("{\"test\": \"json2\"}"),
+	},
+}
+
+func triggerIngestionTask(d *Client, dataSourceName string, entries []TestDO) (string, error) {
+	csvEntriesBuff := &bytes.Buffer{}
+
+	err := gocsv.MarshalWithoutHeaders(entries, csvEntriesBuff)
+	if err != nil {
+		return "", err
+	}
+
+	var spec = NewTaskIngestionSpec(
+		SetTaskType("index_parallel"),
+		SetTaskDataSource(dataSourceName),
+		SetTaskTuningConfig("index_parallel", 25000, 5000000),
+		SetTaskIOConfigType("index_parallel"),
+		SetTaskInputFormat("csv", "false", []string{}),
+		SetTaskInlineInputData(csvEntriesBuff.String()),
+	)
+	taskID, err := d.Tasks().SubmitTask(spec)
+	return taskID, err
+}
 
 func TestTaskService(t *testing.T) {
 	// Set up druid containers using docker-compose.
@@ -28,51 +72,18 @@ func TestTaskService(t *testing.T) {
 
 	// Set up druid service and client.
 	var druidOpts []ClientOption
-	d, err := NewClient("http://localhost:8888", druidOpts...)
+	d, err := NewClient("http://localhost:8091", druidOpts...)
 	assert.NoError(t, err, "error should be nil")
-	var spec = NewTaskIngestionSpec(
-		SetTaskType("index_parallel"),
-		SetTaskDataSource("test-datasource"),
-		SetTuningConfig("index_parallel", 25000, 5000000),
-	)
-	assert.NoError(t, err, "error should be nil")
-	assert.NotNil(t, spec, "specification should not be nil")
 
 	// Waiting for druid coordinator service to start.
 	err = compose.
-		WaitForService("coordinator", wait.NewHTTPStrategy(processInformationPathPrefix).WithPort("8081/tcp").WithStartupTimeout(60*time.Second)).
+		WaitForService("coordinator", wait.NewHTTPStrategy(processInformationPathPrefix).WithPort("8081/tcp").WithStartupTimeout(180*time.Second)).
+		WaitForService("router", wait.NewHTTPStrategy(processInformationPathPrefix).WithPort("8888/tcp").WithStartupTimeout(180*time.Second)).
+		WaitForService("broker", wait.NewHTTPStrategy(processInformationPathPrefix).WithPort("8082/tcp").WithStartupTimeout(180*time.Second)).
 		Up(ctx, tc.Wait(true))
 	assert.NoError(t, err, "coordinator should be up with no error")
 
 	// Test create supervisor -> get status -> terminate sequence.
-	_, err = d.Tasks().SubmitTask(spec)
+	triggerIngestionTask(d, "test-datasource", testObjects)
 	assert.NoError(t, err, "error should be nil")
-	//assert.Equal(t, id, spec.DataSchema.DataSource)
-	//status, err := d.Supervisor().GetStatus(spec.DataSchema.DataSource)
-	//assert.NoError(t, err, "error should be nil")
-	//assert.Equal(t, "PENDING", status.Payload.State)
-	//assert.False(t, status.Payload.Suspended)
-	//
-	//// suspend and check status
-	//suspendedSpec, err := d.Supervisor().Suspend(spec.DataSchema.DataSource)
-	//assert.True(t, suspendedSpec.Suspended)
-	//assert.NoError(t, err, "error should be nil")
-	//
-	//status, err = d.Supervisor().GetStatus(spec.DataSchema.DataSource)
-	//assert.NoError(t, err, "error should be nil")
-	//assert.True(t, status.Payload.Suspended)
-	//
-	//// resume and check status
-	//_, err = d.Supervisor().Resume(spec.DataSchema.DataSource)
-	//assert.NoError(t, err, "error should be nil")
-	//
-	//status, err = d.Supervisor().GetStatus(spec.DataSchema.DataSource)
-	//assert.NoError(t, err, "error should be nil")
-	//assert.Equal(t, "PENDING", status.Payload.State)
-	//assert.False(t, status.Payload.Suspended)
-	//
-	//// terminate
-	//id, err = d.Supervisor().Terminate(spec.DataSchema.DataSource)
-	//assert.NoError(t, err, "error should be nil")
-	//assert.Equal(t, id, spec.DataSchema.DataSource)
 }
