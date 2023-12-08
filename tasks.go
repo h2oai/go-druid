@@ -24,8 +24,13 @@ type TasksService struct {
 	client *Client
 }
 
-// SubmitTaskResponse is a response object of Druid SupervisorService's Terminate method.
+// SubmitTaskResponse is a response object of Druid Task API Submit task method.
 type SubmitTaskResponse struct {
+	Task string `json:"task"`
+}
+
+// ShutdownTaskResponse is a response object of Druid SupervisorService's Terminate method.
+type ShutdownTaskResponse struct {
 	Task string `json:"task"`
 }
 
@@ -57,6 +62,21 @@ func (s *TasksService) GetStatus(taskId string) (TaskStatusResponse, error) {
 		return result, err
 	}
 	return result, nil
+}
+
+// Shutdown calls druid task service's shutdown task API.
+// https://druid.apache.org/docs/latest/api-reference/tasks-api/#shut-down-a-task
+func (s *TasksService) Shutdown(taskId string) (string, error) {
+	r, err := s.client.NewRequest("POST", applyTaskId(taskShutdownEndpoint, taskId), "")
+	var result ShutdownTaskResponse
+	if err != nil {
+		return "", err
+	}
+	_, err = s.client.Do(r, &result)
+	if err != nil {
+		return result.Task, err
+	}
+	return result.Task, nil
 }
 
 func applyTaskId(input string, taskId string) string {

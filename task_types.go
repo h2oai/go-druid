@@ -156,7 +156,7 @@ func SetTaskIOConfigType(typ string) TaskIngestionSpecOptions {
 func SetTaskInputFormat(typ string, findColumnsHeader string, columns []string) TaskIngestionSpecOptions {
 	return func(spec *TaskIngestionSpec) {
 		spec.Spec.IOConfig.InputFormat.Type = typ
-		spec.Spec.IOConfig.InputFormat.FindColumnsHeader = findColumnsHeader
+		spec.Spec.IOConfig.InputFormat.FindColumnsFromHeader = findColumnsHeader
 		spec.Spec.IOConfig.InputFormat.Columns = columns
 	}
 }

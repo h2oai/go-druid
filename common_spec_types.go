@@ -257,11 +257,11 @@ type InputFormat struct {
 	Type string `json:"type"`
 
 	// FlatTextInputFormat / DelimitedInputFormat fields
-	Delimiter         string   `json:"delimiter,omitempty"`
-	ListDelimiter     string   `json:"listDelimiter,omitempty"`
-	FindColumnsHeader string   `json:"findColumnsHeader,omitempty"`
-	SkipHeaderRows    int      `json:"skipHeaderRows,omitempty"`
-	Columns           []string `json:"columns,omitempty"`
+	Delimiter             string   `json:"delimiter,omitempty"`
+	ListDelimiter         string   `json:"listDelimiter,omitempty"`
+	FindColumnsFromHeader string   `json:"findColumnsFromHeader,omitempty"`
+	SkipHeaderRows        int      `json:"skipHeaderRows,omitempty"`
+	Columns               []string `json:"columns,omitempty"`
 
 	// JsonInputFormat fields
 	FlattenSpec *FlattenSpec    `json:"flattenSpec,omitempty"`
