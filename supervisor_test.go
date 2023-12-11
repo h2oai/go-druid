@@ -34,7 +34,7 @@ func TestSupervisorService(t *testing.T) {
 		SetBrokers("kafka:9092"),
 		SetTopic("test-topic"),
 		SetDataSource("test-datasource"),
-		SetDimensions(DimensionSet{Dimension{Name: "dim1"}, Dimension{Name: "dim2"}}))
+		SetDimensions(DimensionSet{{"dim1"}, {"dim2"}}))
 	assert.NoError(t, err, "error should be nil")
 	assert.NotNil(t, spec, "specification should not be nil")
 
