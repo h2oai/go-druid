@@ -50,7 +50,7 @@ func defaultTaskIngestionSpec() *TaskIngestionSpec {
 				GranularitySpec: &GranularitySpec{
 					Type:               "uniform",
 					SegmentGranularity: "DAY",
-					QueryGranularity:   "none",
+					QueryGranularity:   &QueryGranularitySpec{"none"},
 				},
 				DimensionsSpec: &DimensionsSpec{
 					UseSchemaDiscovery: true,
