@@ -13,7 +13,7 @@ type BitmapFactory struct {
 // StringEncodingStrategy type for specifying string encoding at indexing stage.
 type StringEncodingStrategy struct {
 	Type string `json:"type"`
-	// FrontCoded fields
+	// FrontCoded fields.
 	BucketSize    int `json:"bucketSize,omitempty"`
 	FormatVersion int `json:"formatVersion,omitempty"`
 }
@@ -180,12 +180,12 @@ type IdleConfig struct {
 type Firehose struct {
 	Type string `json:"type,omitempty"`
 
-	// EventReceiverFirehoseFactory fields
+	// EventReceiverFirehoseFactory fields.
 	ServiceName string `json:"serviceName,omitempty"`
 	BufferSize  int    `json:"bufferSize,omitempty"`
 	MaxIdleTime int64  `json:"maxIdleTime,omitempty"`
 
-	// FixedCountFirehoseFactory / ClippedFirehoseFactory / TimedShutoffFirehoseFactory fields
+	// FixedCountFirehoseFactory / ClippedFirehoseFactory / TimedShutoffFirehoseFactory fields.
 	Delegate    []Firehose `json:"delegate,omitempty"`
 	Count       int        `json:"count,omitempty"`
 	Interval    string     `json:"interval,omitempty"`
@@ -195,10 +195,10 @@ type Firehose struct {
 // CompactionInputSpec is a specification for compaction task.
 type CompactionInputSpec struct {
 	Type string `json:"type"`
-	// CompactionIntervalSpec fields
+	// CompactionIntervalSpec fields.
 	Interval                 string `json:"interval,omitempty"`
 	Sha256OfSortedSegmentIds string `json:"sha256OfSortedSegmentIds,omitempty"`
-	// SpecificSegmentsSpec fields
+	// SpecificSegmentsSpec fields.
 	Segments []string `json:"segments,omitempty"`
 }
 
@@ -225,20 +225,20 @@ type IOConfig struct {
 	// IndexIOConfig field
 	InputSource      *InputSource `json:"inputSource,omitempty"`
 	AppendToExisting bool         `json:"appendToExisting,omitempty"`
-	// IndexIOConfig / CompactionIOConfig shared field
+	// IndexIOConfig / CompactionIOConfig shared fields.
 	DropExisting bool `json:"dropExisting,omitempty"`
 
-	// CompactionIOConfig / HadoopIOConfig fields
+	// CompactionIOConfig / HadoopIOConfig fields.
 	InputSpec map[string]any `json:"inputSpec,omitempty"`
 
-	// CompactionIOConfig field
+	// CompactionIOConfig fields.
 	AllowNonAlignedInterval bool `json:"allowNonAlignedInterval,omitempty"`
 
-	// HadoopIOConfig fields
+	// HadoopIOConfig fields.
 	MetadataUpdateSpec *MetadataStorageUpdaterJobSpec `json:"metadataUpdateSpec,omitempty"`
 	SegmentOutputPath  string                         `json:"segmentOutputPath,omitempty"`
 
-	// KafkaIndexTaskIOConfig / KinesisIndexTaskIOConfig fields
+	// KafkaIndexTaskIOConfig / KinesisIndexTaskIOConfig fields.
 	Topic                     string              `json:"topic,omitempty"`
 	ConsumerProperties        *ConsumerProperties `json:"consumerProperties,omitempty"`
 	TaskDuration              string              `json:"taskDuration,omitempty"`
@@ -255,7 +255,7 @@ type IOConfig struct {
 	Stream                    string              `json:"stream,omitempty"`
 	UseEarliestSequenceNumber bool                `json:"useEarliestSequenceNumber,omitempty"`
 
-	// common fields
+	// Common fields.
 	FlattenSpec *FlattenSpec `json:"flattenSpec,omitempty"`
 	InputFormat *InputFormat `json:"inputFormat,omitempty"`
 	IdleConfig  *IdleConfig  `json:"idleConfig,omitempty"`
@@ -273,18 +273,18 @@ type ConsumerProperties struct {
 type InputFormat struct {
 	Type string `json:"type"`
 
-	// FlatTextInputFormat / DelimitedInputFormat fields
+	// FlatTextInputFormat / DelimitedInputFormat fields.
 	Delimiter             string   `json:"delimiter,omitempty"`
 	ListDelimiter         string   `json:"listDelimiter,omitempty"`
 	FindColumnsFromHeader string   `json:"findColumnsFromHeader,omitempty"`
 	SkipHeaderRows        int      `json:"skipHeaderRows,omitempty"`
 	Columns               []string `json:"columns,omitempty"`
 
-	// JsonInputFormat fields
+	// JsonInputFormat fields.
 	FlattenSpec *FlattenSpec    `json:"flattenSpec,omitempty"`
 	FeatureSpec map[string]bool `json:"featureSpec,omitempty"`
 
-	// Common CsvInputFormat / JsonInputFormat fields
+	// Common CsvInputFormat / JsonInputFormat fields.
 	KeepNullColumns        bool `json:"keepNullColumns,omitempty"`
 	AssumeNewlineDelimited bool `json:"assumeNewlineDelimited,omitempty"`
 	UseJsonNodeReader      bool `json:"useJsonNodeReader,omitempty"`
@@ -312,24 +312,24 @@ type Database struct {
 type InputSource struct {
 	Type string `json:"type"`
 
-	// LocalInputSource fields
+	// LocalInputSource fields.
 	BaseDir string   `json:"baseDir,omitempty"`
 	Filter  string   `json:"filter,omitempty"`
 	Files   []string `json:"files,omitempty"`
 
-	// HttpInputSource fields
+	// HttpInputSource fields.
 	URIs                       []string               `json:"uris,omitempty"`
 	HttpAuthenticationUsername string                 `json:"httpAuthenticationUsername,omitempty"`
 	HttpAuthenticationPassword string                 `json:"httpAuthenticationPassword,omitempty"`
 	HttpSourceConfig           *HttpInputSourceConfig `json:"config,omitempty"`
 
-	// InlineInputSource fields
+	// InlineInputSource fields.
 	Data string `json:"data,omitempty"`
 
-	// CombiningInputSource fields
+	// CombiningInputSource fields.
 	Delegates []InputSource `json:"delegates,omitempty"`
 
-	// SqlInputSource
+	// SqlInputSource.
 	SQLs     []string  `json:"sqls,omitempty"`
 	Database *Database `json:"database,omitempty"`
 }

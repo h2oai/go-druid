@@ -15,14 +15,14 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-// TestDO represents entry with payload.
-type TestDO struct {
+// testDO represents entry with payload.
+type testDO struct {
 	Timestamp time.Time      `db:"ts"`
 	Id        uuid.UUID      `db:"id"`
 	Payload   types.JSONText `db:"payload"`
 }
 
-var testObjects = []TestDO{
+var testObjects = []testDO{
 	{
 		Id:        uuid.New(),
 		Timestamp: time.Now(),
@@ -35,7 +35,7 @@ var testObjects = []TestDO{
 	},
 }
 
-func triggerIngestionTask(d *Client, dataSourceName string, entries []TestDO) (string, error) {
+func triggerIngestionTask(d *Client, dataSourceName string, entries []testDO) (string, error) {
 	csvEntriesBuff := &bytes.Buffer{}
 
 	err := gocsv.MarshalWithoutHeaders(entries, csvEntriesBuff)
@@ -55,42 +55,66 @@ func triggerIngestionTask(d *Client, dataSourceName string, entries []TestDO) (s
 	return taskID, err
 }
 
-func awaitTaskCompletion(client *Client, taskID string) error {
-	for range time.Tick(100 * time.Millisecond) {
-		res, err := client.Tasks().GetStatus(taskID)
-		if err != nil {
-			return err
-		}
+type testFunction func() error
 
-		if res.Status.Status == "RUNNING" {
-			continue
+func awaitTaskCompletion(client *Client, taskID string, durationSeconds int, tickDurationMilliseconds time.Duration) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(time.Duration(durationSeconds) * time.Second)
+		cancel()
+	}()
+	ticker := time.NewTicker(tickDurationMilliseconds * time.Millisecond)
+	for {
+		select {
+		case <-ticker.C:
+			res, err := client.Tasks().GetStatus(taskID)
+			if err != nil {
+				return err
+			}
+
+			if res.Status.Status == "RUNNING" {
+				continue
+			}
+			break
+		case <-ctx.Done():
+			return errors.New("awaitTaskCompletion timeout")
 		}
-		break
 	}
 	return nil
 }
 
-func awaitTaskRunning(client *Client, taskID string) error {
-	for range time.Tick(100 * time.Millisecond) {
-		res, err := client.Tasks().GetStatus(taskID)
-		if err != nil {
-			return err
-		}
+func awaitTaskRunning(client *Client, taskID string, durationSeconds int, tickDurationMilliseconds time.Duration) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(time.Duration(durationSeconds) * time.Second)
+		cancel()
+	}()
+	ticker := time.NewTicker(tickDurationMilliseconds * time.Millisecond)
+	for {
+		select {
+		case <-ticker.C:
+			res, err := client.Tasks().GetStatus(taskID)
+			if err != nil {
+				return err
+			}
 
-		if res.Status.Status == "RUNNING" {
-			return nil
+			if res.Status.Status == "RUNNING" {
+				return nil
+			}
+		case <-ctx.Done():
+			return errors.New("awaitTaskCompletion timeout")
 		}
 	}
 	return errors.New("task has not started")
 }
 
-func runInlineIngestionTask(client *Client, dataSourceName string, entries []TestDO, recordsCount int) error {
+func runInlineIngestionTask(client *Client, dataSourceName string, entries []testDO, recordsCount int) error {
 	taskID, err := triggerIngestionTask(client, dataSourceName, entries)
 	if err != nil {
 		return err
 	}
 
-	err = awaitTaskCompletion(client, taskID)
+	err = awaitTaskCompletion(client, taskID, 180, 500)
 	if err != nil {
 		return err
 	}
@@ -119,7 +143,7 @@ func TestTaskService(t *testing.T) {
 	})
 
 	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
+	defer cancel()
 
 	// Set up druid service and client.
 	var druidOpts []ClientOption
@@ -154,8 +178,7 @@ func TestTerminateTask(t *testing.T) {
 	t.Cleanup(cancel)
 
 	// Set up druid service and client.
-	var druidOpts []ClientOption
-	d, err := NewClient("http://localhost:8888", druidOpts...)
+	d, err := NewClient("http://localhost:8888")
 	require.NoError(t, err, "error should be nil")
 
 	// Waiting for druid services to start.
@@ -171,7 +194,7 @@ func TestTerminateTask(t *testing.T) {
 	taskID, err := triggerIngestionTask(d, "test-terminate-task-datasource", testObjects)
 	require.NoError(t, err, "error should be nil")
 
-	err = awaitTaskRunning(d, taskID)
+	err = awaitTaskRunning(d, taskID, 180, 500)
 	require.NoError(t, err, "error should be nil")
 
 	shutdownTaskID, err := d.Tasks().Shutdown(taskID)
