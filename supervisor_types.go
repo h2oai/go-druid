@@ -176,11 +176,11 @@ type QueryGranularity struct {
 // partitioning, truncating timestamps, time chunk segmentation or roll-up.
 // https://druid.apache.org/docs/latest/ingestion/ingestion-spec#granularityspec
 type GranularitySpec struct {
-	Type               string               `json:"type"`
-	SegmentGranularity string               `json:"segmentGranularity,omitempty"`
-	QueryGranularity   QueryGranularitySpec `json:"queryGranularity,omitempty"`
-	Rollup             bool                 `json:"rollup,omitempty"`
-	Intervals          []string             `json:"intervals,omitempty"`
+	Type               string                `json:"type"`
+	SegmentGranularity string                `json:"segmentGranularity,omitempty"`
+	QueryGranularity   *QueryGranularitySpec `json:"queryGranularity,omitempty"`
+	Rollup             bool                  `json:"rollup,omitempty"`
+	Intervals          []string              `json:"intervals,omitempty"`
 }
 
 // AutoScalerConfig is part of IOConfig that controls ingestion auto-scaling.
@@ -425,7 +425,7 @@ func defaultKafkaIngestionSpec() *InputIngestionSpec {
 			GranularitySpec: &GranularitySpec{
 				Type:               "uniform",
 				SegmentGranularity: "DAY",
-				QueryGranularity:   QueryGranularitySpec{"none"},
+				QueryGranularity:   &QueryGranularitySpec{"none"},
 				Rollup:             false,
 			},
 		},
@@ -560,7 +560,7 @@ func SetTimestampColumn(column string) IngestionSpecOptions {
 }
 
 // SetGranularitySpec sets granularity spec settings that are applied at druid ingestion partitioning stage.
-func SetGranularitySpec(segmentGranularity string, queryGranularity QueryGranularitySpec, rollup bool) IngestionSpecOptions {
+func SetGranularitySpec(segmentGranularity string, queryGranularity *QueryGranularitySpec, rollup bool) IngestionSpecOptions {
 	return func(spec *InputIngestionSpec) {
 		spec.DataSchema.GranularitySpec = &GranularitySpec{
 			Type:               "uniform",
