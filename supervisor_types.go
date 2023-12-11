@@ -130,10 +130,10 @@ type SpatialDimension struct {
 type TransformSet []Transform
 
 // DimensionSet is a unique set of druid datasource dimensions(labels).
-type DimensionSet []SingleDimension
+type DimensionSet []DimensionSpec
 
-// SingleDimension is a single dataset dimension that can be represented by a typed Dimension or a string value
-type SingleDimension struct {
+// DimensionSpec is a single dataset dimension that can be represented by a typed Dimension or a string value.
+type DimensionSpec struct {
 	Value any
 }
 
@@ -161,10 +161,13 @@ type DimensionsSpec struct {
 	UseSchemaDiscovery   bool                   `json:"useSchemaDiscovery,omitempty"`
 }
 
-type Granularity struct {
+// QueryGranularitySpec is an umbrella type for different representations of query granularity, can be string or
+// QueryGranularity value.
+type QueryGranularitySpec struct {
 	Value any
 }
 
+// QueryGranularity is a typed representation of query granularity.
 type QueryGranularity struct {
 	Type string `json:"type,omitempty"`
 }
@@ -173,11 +176,11 @@ type QueryGranularity struct {
 // partitioning, truncating timestamps, time chunk segmentation or roll-up.
 // https://druid.apache.org/docs/latest/ingestion/ingestion-spec#granularityspec
 type GranularitySpec struct {
-	Type               string      `json:"type"`
-	SegmentGranularity string      `json:"segmentGranularity,omitempty"`
-	QueryGranularity   Granularity `json:"queryGranularity,omitempty"`
-	Rollup             bool        `json:"rollup,omitempty"`
-	Intervals          []string    `json:"intervals,omitempty"`
+	Type               string               `json:"type"`
+	SegmentGranularity string               `json:"segmentGranularity,omitempty"`
+	QueryGranularity   QueryGranularitySpec `json:"queryGranularity,omitempty"`
+	Rollup             bool                 `json:"rollup,omitempty"`
+	Intervals          []string             `json:"intervals,omitempty"`
 }
 
 // AutoScalerConfig is part of IOConfig that controls ingestion auto-scaling.
@@ -422,7 +425,7 @@ func defaultKafkaIngestionSpec() *InputIngestionSpec {
 			GranularitySpec: &GranularitySpec{
 				Type:               "uniform",
 				SegmentGranularity: "DAY",
-				QueryGranularity:   Granularity{"none"},
+				QueryGranularity:   QueryGranularitySpec{"none"},
 				Rollup:             false,
 			},
 		},
@@ -557,7 +560,7 @@ func SetTimestampColumn(column string) IngestionSpecOptions {
 }
 
 // SetGranularitySpec sets granularity spec settings that are applied at druid ingestion partitioning stage.
-func SetGranularitySpec(segmentGranularity string, queryGranularity Granularity, rollup bool) IngestionSpecOptions {
+func SetGranularitySpec(segmentGranularity string, queryGranularity QueryGranularitySpec, rollup bool) IngestionSpecOptions {
 	return func(spec *InputIngestionSpec) {
 		spec.DataSchema.GranularitySpec = &GranularitySpec{
 			Type:               "uniform",
@@ -586,7 +589,7 @@ func SetSQLInputSource(dbType, connectURI, user, password string, sqls []string)
 	}
 }
 
-func (g *Granularity) UnmarshalJSON(b []byte) error {
+func (g *QueryGranularitySpec) UnmarshalJSON(b []byte) error {
 	var str string
 	if err := json.Unmarshal(b, &str); err == nil {
 		g.Value = str
@@ -601,11 +604,11 @@ func (g *Granularity) UnmarshalJSON(b []byte) error {
 	return fmt.Errorf("unsupported query granularity: %s", b)
 }
 
-func (g *Granularity) MarshalJSON() ([]byte, error) {
+func (g *QueryGranularitySpec) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&g.Value)
 }
 
-func (g *SingleDimension) UnmarshalJSON(b []byte) error {
+func (g *DimensionSpec) UnmarshalJSON(b []byte) error {
 	var str string
 	if err := json.Unmarshal(b, &str); err == nil {
 		g.Value = str
@@ -620,6 +623,6 @@ func (g *SingleDimension) UnmarshalJSON(b []byte) error {
 	return fmt.Errorf("unsupported dimension value: %s", b)
 }
 
-func (g *SingleDimension) MarshalJSON() ([]byte, error) {
+func (g *DimensionSpec) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&g.Value)
 }
