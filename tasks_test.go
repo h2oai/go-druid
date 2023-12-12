@@ -80,7 +80,6 @@ func awaitTaskCompletion(client *Client, taskID string, durationSeconds int, tic
 			return errors.New("awaitTaskCompletion timeout")
 		}
 	}
-	return nil
 }
 
 func awaitTaskRunning(client *Client, taskID string, durationSeconds int, tickDurationMilliseconds time.Duration) error {
@@ -105,7 +104,6 @@ func awaitTaskRunning(client *Client, taskID string, durationSeconds int, tickDu
 			return errors.New("awaitTaskCompletion timeout")
 		}
 	}
-	return errors.New("task has not started")
 }
 
 func runInlineIngestionTask(client *Client, dataSourceName string, entries []testDO, recordsCount int) error {
