@@ -292,8 +292,8 @@ func (c *Client) Tasks() *TasksService {
 	return &TasksService{client: c}
 }
 
-func (c *Client) Metadata(waitTimeoutSeconds int, tickerMillis time.Duration) *MetadataService {
-	return &MetadataService{client: c, waitTimeoutSeconds: waitTimeoutSeconds, tickerMilliseconds: tickerMillis}
+func (c *Client) Metadata(options ...metadataOption) *MetadataService {
+	return NewMetadataService(c, options)
 }
 
 func WithBasicAuth(username, password string) ClientOption {

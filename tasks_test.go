@@ -55,15 +55,10 @@ func triggerIngestionTask(d *Client, dataSourceName string, entries []testDO) (s
 	return taskID, err
 }
 
-type testFunction func() error
-
-func awaitTaskCompletion(client *Client, taskID string, durationSeconds int, tickDurationMilliseconds time.Duration) error {
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		time.Sleep(time.Duration(durationSeconds) * time.Second)
-		cancel()
-	}()
-	ticker := time.NewTicker(tickDurationMilliseconds * time.Millisecond)
+// AwaitTaskCompletion waits for the task to complete. Function timeouts with an error after awaitTimeout nanoseconds.
+func AwaitTaskCompletion(client *Client, taskID string, awaitTimeout time.Duration, tickerDuration time.Duration) error {
+	ticker := time.NewTicker(tickerDuration)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
@@ -76,19 +71,16 @@ func awaitTaskCompletion(client *Client, taskID string, durationSeconds int, tic
 				continue
 			}
 			break
-		case <-ctx.Done():
-			return errors.New("awaitTaskCompletion timeout")
+		case <-time.After(awaitTimeout):
+			return errors.New("AwaitTaskRunning timeout")
 		}
 	}
 }
 
-func awaitTaskRunning(client *Client, taskID string, durationSeconds int, tickDurationMilliseconds time.Duration) error {
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		time.Sleep(time.Duration(durationSeconds) * time.Second)
-		cancel()
-	}()
-	ticker := time.NewTicker(tickDurationMilliseconds * time.Millisecond)
+// AwaitTaskStatus waits for the druid task status for the maximum of awaitTimeout duration, querying druid task API.
+func AwaitTaskStatus(client *Client, taskID string, status string, awaitTimeout time.Duration, tickerDuration time.Duration) error {
+	ticker := time.NewTicker(tickerDuration)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
@@ -97,11 +89,11 @@ func awaitTaskRunning(client *Client, taskID string, durationSeconds int, tickDu
 				return err
 			}
 
-			if res.Status.Status == "RUNNING" {
+			if res.Status.Status == status {
 				return nil
 			}
-		case <-ctx.Done():
-			return errors.New("awaitTaskCompletion timeout")
+		case <-time.After(awaitTimeout):
+			return errors.New("AwaitTaskRunning timeout")
 		}
 	}
 }
@@ -112,17 +104,17 @@ func runInlineIngestionTask(client *Client, dataSourceName string, entries []tes
 		return err
 	}
 
-	err = awaitTaskCompletion(client, taskID, 180, 500)
+	err = AwaitTaskCompletion(client, taskID, 180*time.Second, 100*time.Millisecond)
 	if err != nil {
 		return err
 	}
 
-	err = client.Metadata(180, 500).AwaitDataSourceAvailable(dataSourceName)
+	err = client.Metadata(WithMetadataQueryTicker(200*time.Millisecond), WithMetadataQueryTimeout(120*time.Second)).AwaitDataSourceAvailable(dataSourceName)
 	if err != nil {
 		return err
 	}
 
-	err = client.Metadata(180, 500).AwaitRecordsCount(dataSourceName, recordsCount)
+	err = client.Metadata().AwaitRecordsCount(dataSourceName, recordsCount)
 	if err != nil {
 		return err
 	}
@@ -191,7 +183,7 @@ func TestTerminateTask(t *testing.T) {
 	taskID, err := triggerIngestionTask(d, "test-terminate-task-datasource", testObjects)
 	require.NoError(t, err, "error should be nil")
 
-	err = awaitTaskRunning(d, taskID, 180, 500)
+	err = AwaitTaskStatus(d, taskID, "RUNNING", 180*time.Second, 200*time.Millisecond)
 	require.NoError(t, err, "error should be nil")
 
 	shutdownTaskID, err := d.Tasks().Shutdown(taskID)
