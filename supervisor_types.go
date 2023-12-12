@@ -1,10 +1,5 @@
 package druid
 
-import (
-	"encoding/json"
-	"fmt"
-)
-
 // InputIngestionSpec is the root-level type defining an ingestion spec used
 // by Apache Druid.
 type InputIngestionSpec struct {
@@ -224,7 +219,7 @@ func SetTimestampColumn(column string) IngestionSpecOptions {
 }
 
 // SetGranularitySpec sets granularity spec settings that are applied at druid ingestion partitioning stage.
-func SetGranularitySpec(segmentGranularity string, queryGranularity *QueryGranularitySpec, rollup bool) IngestionSpecOptions {
+func SetGrVanularitySpec(segmentGranularity string, queryGranularity *QueryGranularitySpec, rollup bool) IngestionSpecOptions {
 	return func(spec *InputIngestionSpec) {
 		spec.DataSchema.GranularitySpec = &GranularitySpec{
 			Type:               "uniform",
@@ -251,42 +246,4 @@ func SetSQLInputSource(dbType, connectURI, user, password string, sqls []string)
 			},
 		}
 	}
-}
-
-func (g *QueryGranularitySpec) UnmarshalJSON(b []byte) error {
-	var str string
-	if err := json.Unmarshal(b, &str); err == nil {
-		g.Value = str
-		return nil
-	}
-
-	var qg QueryGranularity
-	if err := json.Unmarshal(b, &qg); err == nil {
-		g.Value = qg
-		return nil
-	}
-	return fmt.Errorf("unsupported query granularity: %s", b)
-}
-
-func (g *QueryGranularitySpec) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&g.Value)
-}
-
-func (g *DimensionSpec) UnmarshalJSON(b []byte) error {
-	var str string
-	if err := json.Unmarshal(b, &str); err == nil {
-		g.Value = str
-		return nil
-	}
-
-	var qg Dimension
-	if err := json.Unmarshal(b, &qg); err == nil {
-		g.Value = qg
-		return nil
-	}
-	return fmt.Errorf("unsupported dimension value: %s", b)
-}
-
-func (g *DimensionSpec) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&g.Value)
 }
