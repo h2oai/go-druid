@@ -58,6 +58,9 @@ func TriggerIngestionTask[T any](d *Client, dataSourceName string, entries []T) 
 
 // AwaitTaskCompletion waits for the task to complete. Function timeouts with an error after awaitTimeout nanoseconds.
 func AwaitTaskCompletion(client *Client, taskID string, awaitTimeout time.Duration, tickerDuration time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), awaitTimeout)
+	defer cancel()
+
 	ticker := time.NewTicker(tickerDuration)
 	defer ticker.Stop()
 L:
@@ -73,7 +76,7 @@ L:
 				continue
 			}
 			break L
-		case <-time.After(awaitTimeout):
+		case <-ctx.Done():
 			return errors.New("AwaitTaskRunning timeout")
 		}
 	}
@@ -82,6 +85,9 @@ L:
 
 // AwaitTaskStatus waits for the druid task status for the maximum of awaitTimeout duration, querying druid task API.
 func AwaitTaskStatus(client *Client, taskID string, status string, awaitTimeout time.Duration, tickerDuration time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), awaitTimeout)
+	defer cancel()
+
 	ticker := time.NewTicker(tickerDuration)
 	defer ticker.Stop()
 	for {
@@ -95,7 +101,7 @@ func AwaitTaskStatus(client *Client, taskID string, status string, awaitTimeout 
 			if res.Status.Status == status {
 				return nil
 			}
-		case <-time.After(awaitTimeout):
+		case <-ctx.Done():
 			return errors.New("AwaitTaskRunning timeout")
 		}
 	}

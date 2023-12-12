@@ -1,6 +1,7 @@
 package druid
 
 import (
+	"context"
 	_ "embed"
 	"errors"
 	"strings"
@@ -64,6 +65,8 @@ func fillDataSourceName(in string, ds string) string {
 
 // AwaitDataSourceAvailable awaits for a datasource to be visible in druid table listing.
 func (md *MetadataService) AwaitDataSourceAvailable(dataSourceName string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), md.awaitTimeout)
+	defer cancel()
 	ticker := time.NewTicker(md.tickerDuration)
 	defer ticker.Stop()
 	q := query.
@@ -81,7 +84,7 @@ func (md *MetadataService) AwaitDataSourceAvailable(dataSourceName string) error
 			if len(res) >= 1 && res[0].Cnt == 1 {
 				return nil
 			}
-		case <-time.After(md.awaitTimeout):
+		case <-ctx.Done():
 			return errors.New("AwaitDataSourceAvailable timeout")
 		}
 	}
@@ -92,6 +95,8 @@ var datasourceRecordsQuery string
 
 // AwaitRecordsCount awaits for specific recordsCount in a given datasource.
 func (md *MetadataService) AwaitRecordsCount(dataSourceName string, recordsCount int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), md.awaitTimeout)
+	defer cancel()
 	ticker := time.NewTicker(md.tickerDuration)
 	defer ticker.Stop()
 	q := query.NewSQL()
@@ -108,7 +113,7 @@ func (md *MetadataService) AwaitRecordsCount(dataSourceName string, recordsCount
 			if len(res) >= 1 && res[0].Cnt == recordsCount {
 				return nil
 			}
-		case <-time.After(md.awaitTimeout):
+		case <-ctx.Done():
 			return errors.New("AwaitRecordsCount timeout")
 		}
 	}
