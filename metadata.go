@@ -79,7 +79,7 @@ func (md *MetadataService) AwaitDataSourceAvailable(dataSourceName string) error
 				return err
 			}
 			if len(res) >= 1 && res[0].Cnt == 1 {
-				break
+				return nil
 			}
 		case <-time.After(md.awaitTimeout):
 			return errors.New("AwaitDataSourceAvailable timeout")
@@ -106,7 +106,7 @@ func (md *MetadataService) AwaitRecordsCount(dataSourceName string, recordsCount
 			}
 
 			if len(res) >= 1 && res[0].Cnt == recordsCount {
-				break
+				return nil
 			}
 		case <-time.After(md.awaitTimeout):
 			return errors.New("AwaitRecordsCount timeout")
