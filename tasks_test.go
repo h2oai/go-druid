@@ -58,12 +58,9 @@ func TriggerIngestionTask[T any](d *Client, dataSourceName string, entries []T) 
 
 // AwaitTaskCompletion waits for the task to complete. Function timeouts with an error after awaitTimeout nanoseconds.
 func AwaitTaskCompletion(client *Client, taskID string, awaitTimeout time.Duration, tickerDuration time.Duration) error {
-	ctx, cancel := context.WithTimeout(context.Background(), awaitTimeout)
-	defer cancel()
-
 	ticker := time.NewTicker(tickerDuration)
 	defer ticker.Stop()
-L:
+	afterTimeout := time.After(awaitTimeout)
 	for {
 		select {
 		case <-ticker.C:
@@ -75,21 +72,18 @@ L:
 			if res.Status.Status == "RUNNING" {
 				continue
 			}
-			break L
-		case <-ctx.Done():
+			return nil
+		case <-afterTimeout:
 			return errors.New("AwaitTaskRunning timeout")
 		}
 	}
-	return nil
 }
 
 // AwaitTaskStatus waits for the druid task status for the maximum of awaitTimeout duration, querying druid task API.
 func AwaitTaskStatus(client *Client, taskID string, status string, awaitTimeout time.Duration, tickerDuration time.Duration) error {
-	ctx, cancel := context.WithTimeout(context.Background(), awaitTimeout)
-	defer cancel()
-
 	ticker := time.NewTicker(tickerDuration)
 	defer ticker.Stop()
+	afterTimeout := time.After(awaitTimeout)
 	for {
 		select {
 		case <-ticker.C:
@@ -101,7 +95,7 @@ func AwaitTaskStatus(client *Client, taskID string, status string, awaitTimeout 
 			if res.Status.Status == status {
 				return nil
 			}
-		case <-ctx.Done():
+		case <-afterTimeout:
 			return errors.New("AwaitTaskRunning timeout")
 		}
 	}
@@ -114,12 +108,12 @@ func RunInlineIngestionTask[T any](client *Client, dataSourceName string, entrie
 		return err
 	}
 
-	err = AwaitTaskCompletion(client, taskID, 180*time.Second, 100*time.Millisecond)
+	err = AwaitTaskCompletion(client, taskID, 180*time.Second, 500*time.Millisecond)
 	if err != nil {
 		return err
 	}
 
-	err = client.Metadata(WithMetadataQueryTicker(200*time.Millisecond), WithMetadataQueryTimeout(120*time.Second)).AwaitDataSourceAvailable(dataSourceName)
+	err = client.Metadata(WithMetadataQueryTicker(500*time.Millisecond), WithMetadataQueryTimeout(180*time.Second)).AwaitDataSourceAvailable(dataSourceName)
 	if err != nil {
 		return err
 	}

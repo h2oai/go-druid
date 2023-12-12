@@ -1,7 +1,6 @@
 package druid
 
 import (
-	"context"
 	_ "embed"
 	"errors"
 	"strings"
@@ -28,7 +27,7 @@ type MetadataService struct {
 	awaitTimeout   time.Duration
 }
 
-func NewMetadataService(client *Client, options []metadataOption) *MetadataService {
+func NewMetadataService(client *Client, options ...metadataOption) *MetadataService {
 	opts := &metadataOptions{
 		tickerDuration: 500 * time.Millisecond,
 		awaitTimeout:   180 * time.Second,
@@ -65,10 +64,9 @@ func fillDataSourceName(in string, ds string) string {
 
 // AwaitDataSourceAvailable awaits for a datasource to be visible in druid table listing.
 func (md *MetadataService) AwaitDataSourceAvailable(dataSourceName string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), md.awaitTimeout)
-	defer cancel()
 	ticker := time.NewTicker(md.tickerDuration)
 	defer ticker.Stop()
+	afterTimeout := time.After(md.awaitTimeout)
 	q := query.
 		NewSQL().
 		SetQuery(datasourceAvailableQuery).
@@ -84,7 +82,7 @@ func (md *MetadataService) AwaitDataSourceAvailable(dataSourceName string) error
 			if len(res) >= 1 && res[0].Cnt == 1 {
 				return nil
 			}
-		case <-ctx.Done():
+		case <-afterTimeout:
 			return errors.New("AwaitDataSourceAvailable timeout")
 		}
 	}
@@ -95,12 +93,11 @@ var datasourceRecordsQuery string
 
 // AwaitRecordsCount awaits for specific recordsCount in a given datasource.
 func (md *MetadataService) AwaitRecordsCount(dataSourceName string, recordsCount int) error {
-	ctx, cancel := context.WithTimeout(context.Background(), md.awaitTimeout)
-	defer cancel()
 	ticker := time.NewTicker(md.tickerDuration)
 	defer ticker.Stop()
 	q := query.NewSQL()
 	q.SetQuery(fillDataSourceName(datasourceRecordsQuery, dataSourceName))
+	afterTimeout := time.After(md.awaitTimeout)
 	for {
 		select {
 		case <-ticker.C:
@@ -113,7 +110,7 @@ func (md *MetadataService) AwaitRecordsCount(dataSourceName string, recordsCount
 			if len(res) >= 1 && res[0].Cnt == recordsCount {
 				return nil
 			}
-		case <-ctx.Done():
+		case <-afterTimeout:
 			return errors.New("AwaitRecordsCount timeout")
 		}
 	}

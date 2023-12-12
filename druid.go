@@ -293,7 +293,7 @@ func (c *Client) Tasks() *TasksService {
 }
 
 func (c *Client) Metadata(options ...metadataOption) *MetadataService {
-	return NewMetadataService(c, options)
+	return NewMetadataService(c, options...)
 }
 
 func WithBasicAuth(username, password string) ClientOption {
