@@ -35,7 +35,8 @@ var testObjects = []testDO{
 	},
 }
 
-func triggerIngestionTask(d *Client, dataSourceName string, entries []testDO) (string, error) {
+// TriggerIngestionTask initiates inline ingestion task with druid client.
+func TriggerIngestionTask[T any](d *Client, dataSourceName string, entries []T) (string, error) {
 	csvEntriesBuff := &bytes.Buffer{}
 
 	err := gocsv.MarshalWithoutHeaders(entries, csvEntriesBuff)
@@ -100,8 +101,9 @@ func AwaitTaskStatus(client *Client, taskID string, status string, awaitTimeout 
 	}
 }
 
-func runInlineIngestionTask(client *Client, dataSourceName string, entries []testDO, recordsCount int) error {
-	taskID, err := triggerIngestionTask(client, dataSourceName, entries)
+// RunInlineIngestionTask initiates inline ingestion task with druid client and runs until it is complete.
+func RunInlineIngestionTask[T any](client *Client, dataSourceName string, entries []T, recordsCount int) error {
+	taskID, err := TriggerIngestionTask(client, dataSourceName, entries)
 	if err != nil {
 		return err
 	}
@@ -151,7 +153,7 @@ func TestTaskService(t *testing.T) {
 	require.NoError(t, err, "druid services should be up with no error")
 
 	// Test create ingestion task -> get status -> complete sequence.
-	runInlineIngestionTask(d, "test-submit-task-datasource", testObjects, 2)
+	RunInlineIngestionTask(d, "test-submit-task-datasource", testObjects, 2)
 	require.NoError(t, err, "error should be nil")
 }
 
@@ -182,7 +184,7 @@ func TestTerminateTask(t *testing.T) {
 	require.NoError(t, err, "druid services should be up with no error")
 
 	// Test create ingestion task -> get status -> terminate sequence.
-	taskID, err := triggerIngestionTask(d, "test-terminate-task-datasource", testObjects)
+	taskID, err := TriggerIngestionTask(d, "test-terminate-task-datasource", testObjects)
 	require.NoError(t, err, "error should be nil")
 
 	err = AwaitTaskStatus(d, taskID, "RUNNING", 180*time.Second, 200*time.Millisecond)
