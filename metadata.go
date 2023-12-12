@@ -1,6 +1,8 @@
 package druid
 
 import (
+	_ "embed"
+	"strings"
 	"time"
 
 	"github.com/h2oai/go-druid/builder/query"
@@ -15,10 +17,19 @@ type MetadataService struct {
 	client *Client
 }
 
+//go:embed sql/datasource_available.sql
+var datasourceAvailableQuery string
+
+func fillDataSourceName(in string, ds string) string {
+	return strings.Replace(in, "${{ datasource }}", ds, 1)
+}
+
 // AwaitDataSourceAvailable awaits for a datasource to be visible in druid table listing.
 func (md *MetadataService) AwaitDataSourceAvailable(dataSourceName string) error {
-	q := query.NewSQL()
-	q.SetQuery("SELECT count(*) cnt FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'druid' and TABLE_NAME='" + dataSourceName + "'")
+	q := query.
+		NewSQL().
+		SetQuery(datasourceAvailableQuery).
+		SetParameters([]query.SQLParameter{query.NewSQLParameter("VARCHAR", dataSourceName)})
 	for range time.Tick(100 * time.Millisecond) {
 		var res []count
 		_, err := md.client.Query().Execute(q, &res)
@@ -33,10 +44,13 @@ func (md *MetadataService) AwaitDataSourceAvailable(dataSourceName string) error
 	return nil
 }
 
+//go:embed sql/datasource_records.sql
+var datasourceRecordsQuery string
+
 // AwaitRecordsCount awaits for specific recordsCount in a given datasource.
 func (md *MetadataService) AwaitRecordsCount(dataSourceName string, recordsCount int) error {
 	q := query.NewSQL()
-	q.SetQuery("SELECT count(*) cnt FROM \"" + dataSourceName + "\"")
+	q.SetQuery(fillDataSourceName(datasourceRecordsQuery, dataSourceName))
 	for range time.Tick(100 * time.Millisecond) {
 		var res []count
 		_, err := md.client.Query().Execute(q, &res)

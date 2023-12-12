@@ -144,8 +144,7 @@ func TestTaskService(t *testing.T) {
 	defer cancel()
 
 	// Set up druid service and client.
-	var druidOpts []ClientOption
-	d, err := NewClient("http://localhost:8888", druidOpts...)
+	d, err := NewClient("http://localhost:8888")
 	require.NoError(t, err, "error should be nil")
 
 	// Waiting for druid services to start.
@@ -173,7 +172,7 @@ func TestTerminateTask(t *testing.T) {
 	})
 
 	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
+	defer cancel()
 
 	// Set up druid service and client.
 	d, err := NewClient("http://localhost:8888")
