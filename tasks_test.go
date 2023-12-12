@@ -117,12 +117,12 @@ func runInlineIngestionTask(client *Client, dataSourceName string, entries []tes
 		return err
 	}
 
-	err = client.Metadata().AwaitDataSourceAvailable(dataSourceName)
+	err = client.Metadata(180, 500).AwaitDataSourceAvailable(dataSourceName)
 	if err != nil {
 		return err
 	}
 
-	err = client.Metadata().AwaitRecordsCount(dataSourceName, recordsCount)
+	err = client.Metadata(180, 500).AwaitRecordsCount(dataSourceName, recordsCount)
 	if err != nil {
 		return err
 	}
