@@ -143,7 +143,7 @@ func (s *SupervisorService) SuspendAll() (string, error) {
 // https://druid.apache.org/docs/latest/api-reference/supervisor-api/#resume-a-supervisor
 func (s *SupervisorService) Resume(supervisorID string) (OutputIngestionSpec, error) {
 	var result OutputIngestionSpec
-	r, err := s.client.NewRequest(http.MethodPost, applySupervisorId(supervisorResumeEndpoint, supervisorID), nil)
+	r, err := s.client.NewRequest(http.MethodPost, applySupervisorId(supervisorResumeEndpoint, supervisorID), nil /*no data*/)
 	if err != nil {
 		return result, err
 	}
