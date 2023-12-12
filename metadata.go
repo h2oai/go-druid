@@ -55,7 +55,6 @@ func (md *MetadataService) AwaitDataSourceAvailable(dataSourceName string) error
 			return errors.New("AwaitDataSourceAvailable timeout")
 		}
 	}
-	return nil
 }
 
 //go:embed sql/datasource_records.sql
@@ -88,5 +87,4 @@ func (md *MetadataService) AwaitRecordsCount(dataSourceName string, recordsCount
 			return errors.New("AwaitRecordsCount timeout")
 		}
 	}
-	return nil
 }
