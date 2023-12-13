@@ -35,8 +35,8 @@ var testObjects = []testDO{
 	},
 }
 
-// TriggerIngestionTask initiates inline ingestion task with druid client.
-func TriggerIngestionTask[T any](d *Client, dataSourceName string, entries []T) (string, error) {
+// triggerIngestionTask initiates inline ingestion task with druid client.
+func triggerIngestionTask[T any](d *Client, dataSourceName string, entries []T) (string, error) {
 	csvEntriesBuff := &bytes.Buffer{}
 
 	err := gocsv.MarshalWithoutHeaders(entries, csvEntriesBuff)
@@ -57,8 +57,8 @@ func TriggerIngestionTask[T any](d *Client, dataSourceName string, entries []T) 
 	return taskID, err
 }
 
-// AwaitTaskCompletion waits for the task to complete. Function timeouts with an error after awaitTimeout nanoseconds.
-func AwaitTaskCompletion(client *Client, taskID string, awaitTimeout time.Duration, tickerDuration time.Duration) error {
+// awaitTaskCompletion waits for the task to complete. Function timeouts with an error after awaitTimeout nanoseconds.
+func awaitTaskCompletion(client *Client, taskID string, awaitTimeout time.Duration, tickerDuration time.Duration) error {
 	ticker := time.NewTicker(tickerDuration)
 	defer ticker.Stop()
 	afterTimeout := time.After(awaitTimeout)
@@ -80,8 +80,8 @@ func AwaitTaskCompletion(client *Client, taskID string, awaitTimeout time.Durati
 	}
 }
 
-// AwaitTaskStatus waits for the druid task status for the maximum of awaitTimeout duration, querying druid task API.
-func AwaitTaskStatus(client *Client, taskID string, status string, awaitTimeout time.Duration, tickerDuration time.Duration) error {
+// awaitTaskStatus waits for the druid task status for the maximum of awaitTimeout duration, querying druid task API.
+func awaitTaskStatus(client *Client, taskID string, status string, awaitTimeout time.Duration, tickerDuration time.Duration) error {
 	ticker := time.NewTicker(tickerDuration)
 	defer ticker.Stop()
 	afterTimeout := time.After(awaitTimeout)
@@ -102,24 +102,24 @@ func AwaitTaskStatus(client *Client, taskID string, status string, awaitTimeout 
 	}
 }
 
-// RunInlineIngestionTask initiates inline ingestion task with druid client and runs until it is complete.
-func RunInlineIngestionTask[T any](client *Client, dataSourceName string, entries []T, recordsCount int) error {
-	taskID, err := TriggerIngestionTask(client, dataSourceName, entries)
+// runInlineIngestionTask initiates inline ingestion task with druid client and runs until it is complete.
+func runInlineIngestionTask[T any](client *Client, dataSourceName string, entries []T, recordsCount int) error {
+	taskID, err := triggerIngestionTask(client, dataSourceName, entries)
 	if err != nil {
 		return err
 	}
 
-	err = AwaitTaskCompletion(client, taskID, 180*time.Second, 500*time.Millisecond)
+	err = awaitTaskCompletion(client, taskID, 180*time.Second, 500*time.Millisecond)
 	if err != nil {
 		return err
 	}
 
-	err = client.Metadata(WithMetadataQueryTicker(500*time.Millisecond), WithMetadataQueryTimeout(180*time.Second)).AwaitDataSourceAvailable(dataSourceName)
+	err = client.metadata(WithMetadataQueryTicker(500*time.Millisecond), WithMetadataQueryTimeout(180*time.Second)).awaitDataSourceAvailable(dataSourceName)
 	if err != nil {
 		return err
 	}
 
-	err = client.Metadata().AwaitRecordsCount(dataSourceName, recordsCount)
+	err = client.metadata().awaitRecordsCount(dataSourceName, recordsCount)
 	if err != nil {
 		return err
 	}
@@ -154,7 +154,7 @@ func TestTaskService(t *testing.T) {
 	require.NoError(t, err, "druid services should be up with no error")
 
 	// Test create ingestion task -> get status -> complete sequence.
-	RunInlineIngestionTask(d, "test-submit-task-datasource", testObjects, 2)
+	runInlineIngestionTask(d, "test-submit-task-datasource", testObjects, 2)
 	require.NoError(t, err, "error should be nil")
 }
 
@@ -185,10 +185,10 @@ func TestTerminateTask(t *testing.T) {
 	require.NoError(t, err, "druid services should be up with no error")
 
 	// Test create ingestion task -> get status -> terminate sequence.
-	taskID, err := TriggerIngestionTask(d, "test-terminate-task-datasource", testObjects)
+	taskID, err := triggerIngestionTask(d, "test-terminate-task-datasource", testObjects)
 	require.NoError(t, err, "error should be nil")
 
-	err = AwaitTaskStatus(d, taskID, "RUNNING", 180*time.Second, 200*time.Millisecond)
+	err = awaitTaskStatus(d, taskID, "RUNNING", 180*time.Second, 200*time.Millisecond)
 	require.NoError(t, err, "error should be nil")
 
 	shutdownTaskID, err := d.Tasks().Shutdown(taskID)

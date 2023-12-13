@@ -9,6 +9,10 @@ import (
 	"github.com/h2oai/go-druid/builder/query"
 )
 
+func (c *Client) metadata(options ...metadataOption) *metadataService {
+	return newMetadataService(c, options...)
+}
+
 type count struct {
 	Cnt int `json:"cnt"`
 }
@@ -20,14 +24,15 @@ type metadataOptions struct {
 
 type metadataOption func(*metadataOptions)
 
-// MetadataService is a service that runs druid metadata requests using druid SQL API.
-type MetadataService struct {
+// metadataService is a service that runs druid metadata requests using druid SQL API.
+// NOTE: for internal tests use only, not representing official druid API.
+type metadataService struct {
 	client         *Client
 	tickerDuration time.Duration
 	awaitTimeout   time.Duration
 }
 
-func NewMetadataService(client *Client, options ...metadataOption) *MetadataService {
+func newMetadataService(client *Client, options ...metadataOption) *metadataService {
 	opts := &metadataOptions{
 		tickerDuration: 500 * time.Millisecond,
 		awaitTimeout:   180 * time.Second,
@@ -35,7 +40,7 @@ func NewMetadataService(client *Client, options ...metadataOption) *MetadataServ
 	for _, opt := range options {
 		opt(opts)
 	}
-	md := &MetadataService{
+	md := &metadataService{
 		client:         client,
 		tickerDuration: opts.tickerDuration,
 		awaitTimeout:   opts.awaitTimeout,
@@ -62,8 +67,9 @@ func fillDataSourceName(in string, ds string) string {
 	return strings.Replace(in, "${{ datasource }}", ds, 1)
 }
 
-// AwaitDataSourceAvailable awaits for a datasource to be visible in druid table listing.
-func (md *MetadataService) AwaitDataSourceAvailable(dataSourceName string) error {
+// awaitDataSourceAvailable awaits for a datasource to be visible in druid table listing.
+// NOTE: for internal tests use only, not representing official druid API.
+func (md *metadataService) awaitDataSourceAvailable(dataSourceName string) error {
 	ticker := time.NewTicker(md.tickerDuration)
 	defer ticker.Stop()
 	afterTimeout := time.After(md.awaitTimeout)
@@ -83,7 +89,7 @@ func (md *MetadataService) AwaitDataSourceAvailable(dataSourceName string) error
 				return nil
 			}
 		case <-afterTimeout:
-			return errors.New("AwaitDataSourceAvailable timeout")
+			return errors.New("awaitDataSourceAvailable timeout")
 		}
 	}
 }
@@ -91,8 +97,9 @@ func (md *MetadataService) AwaitDataSourceAvailable(dataSourceName string) error
 //go:embed sql/datasource_records.sql
 var datasourceRecordsQuery string
 
-// AwaitRecordsCount awaits for specific recordsCount in a given datasource.
-func (md *MetadataService) AwaitRecordsCount(dataSourceName string, recordsCount int) error {
+// awaitRecordsCount awaits for specific recordsCount in a given datasource.
+// NOTE: not safe and intended for internal tests use only. Not representing official druid API.
+func (md *metadataService) awaitRecordsCount(dataSourceName string, recordsCount int) error {
 	ticker := time.NewTicker(md.tickerDuration)
 	defer ticker.Stop()
 	q := query.NewSQL()
@@ -111,7 +118,7 @@ func (md *MetadataService) AwaitRecordsCount(dataSourceName string, recordsCount
 				return nil
 			}
 		case <-afterTimeout:
-			return errors.New("AwaitRecordsCount timeout")
+			return errors.New("awaitRecordsCount timeout")
 		}
 	}
 }
