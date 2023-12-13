@@ -43,10 +43,6 @@ func defaultTaskIngestionSpec() *TaskIngestionSpec {
 		Spec: &IngestionSpecData{
 			DataSchema: &DataSchema{
 				DataSource: "some_datasource",
-				TimeStampSpec: &TimestampSpec{
-					Column: "ts",
-					Format: "auto",
-				},
 				GranularitySpec: &GranularitySpec{
 					Type:               "uniform",
 					SegmentGranularity: "DAY",
@@ -63,16 +59,9 @@ func defaultTaskIngestionSpec() *TaskIngestionSpec {
 			IOConfig: &IOConfig{
 				Type: "index_parallel",
 				InputSource: &InputSource{
-					Type: "sql",
-					Database: &Database{
-						Type: "postgresql",
-						ConnectorConfig: &ConnectorConfig{
-							ConnectURI: "jdbc:postgresql://host:port/schema",
-							User:       "user",
-							Password:   "password",
-						},
-					},
-					SQLs: []string{},
+					Type:     "sql",
+					Database: &Database{},
+					SQLs:     []string{},
 				},
 				InputFormat: &InputFormat{
 					Type: "json",
@@ -94,6 +83,18 @@ func SetTaskType(stype string) TaskIngestionSpecOptions {
 	return func(spec *TaskIngestionSpec) {
 		if stype != "" {
 			spec.Type = stype
+		}
+	}
+}
+
+// SetTaskTimestampColumn sets the type of the task IOConfig.
+func SetTaskTimestampColumn(column string) TaskIngestionSpecOptions {
+	return func(spec *TaskIngestionSpec) {
+		if column != "" {
+			spec.Spec.DataSchema.TimeStampSpec = &TimestampSpec{
+				Column: column,
+				Format: "auto",
+			}
 		}
 	}
 }

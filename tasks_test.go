@@ -46,6 +46,7 @@ func TriggerIngestionTask[T any](d *Client, dataSourceName string, entries []T) 
 
 	var spec = NewTaskIngestionSpec(
 		SetTaskType("index_parallel"),
+		SetTaskTimestampColumn("ts"),
 		SetTaskDataSource(dataSourceName),
 		SetTaskTuningConfig("index_parallel", 25000, 5000000),
 		SetTaskIOConfigType("index_parallel"),
