@@ -333,7 +333,7 @@ type InputSource struct {
 	SQLs     []string  `json:"sqls,omitempty"`
 	Database *Database `json:"database,omitempty"`
 
-	// Druid input source
+	// Druid input source.
 	Datasource string `json:"dataSource,omitempty"`
 	// ISO-8601 interval, which defines the time range to fetch the data over.
 	Interval string   `json:"interval,omitempty"`
