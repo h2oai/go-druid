@@ -44,6 +44,22 @@ type TaskIngestionSpec struct {
 	Spec *IngestionSpecData `json:"spec"`
 }
 
+// RunningTask defines running task returned by GetRunningTasks method.
+// https://druid.apache.org/docs/latest/api-reference/tasks-api#sample-response-2
+type RunningTask struct {
+	ID         string `json:"id"`
+	Type       string `json:"type"`
+	Status     string `json:"status"`
+	Datasource string `json:"dataSource"`
+}
+
+// RunningTasksOptions defines supported options which can be passed to GetRunningTasks method.
+// https://druid.apache.org/docs/latest/api-reference/tasks-api#query-parameters-2
+type RunningTasksOptions struct {
+	Datasource string `url:"datasource"`
+	Type       string `url:"type"`
+}
+
 // defaultTaskIngestionSpec returns a default TaskIngestionSpec with basic ingestion
 // specification fields initialized.
 func defaultTaskIngestionSpec() *TaskIngestionSpec {
@@ -160,9 +176,11 @@ func SetTaskIOConfigType(typ string) TaskIngestionSpecOptions {
 // SetTaskInputFormat configures input format for the task based ingestion.
 func SetTaskInputFormat(typ string, findColumnsHeader string, columns []string) TaskIngestionSpecOptions {
 	return func(spec *TaskIngestionSpec) {
-		spec.Spec.IOConfig.InputFormat.Type = typ
-		spec.Spec.IOConfig.InputFormat.FindColumnsFromHeader = findColumnsHeader
-		spec.Spec.IOConfig.InputFormat.Columns = columns
+		spec.Spec.IOConfig.InputFormat = &InputFormat{
+			Type:                  typ,
+			FindColumnsFromHeader: findColumnsHeader,
+			Columns:               columns,
+		}
 	}
 }
 

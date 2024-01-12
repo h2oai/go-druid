@@ -1,6 +1,9 @@
 package druid
 
-import "strings"
+import (
+	"net/http"
+	"strings"
+)
 
 const (
 	tasksEndpoint             = "druid/indexer/v1/tasks"
@@ -81,4 +84,19 @@ func (s *TasksService) Shutdown(taskId string) (string, error) {
 
 func applyTaskId(input string, taskId string) string {
 	return strings.Replace(input, ":taskId", taskId, 1)
+}
+
+// GetRunningTasks calls druid task service's running tasks API.
+// https://druid.apache.org/docs/latest/api-reference/tasks-api#get-an-array-of-running-tasks
+func (s *TasksService) GetRunningTasks(options RunningTasksOptions) ([]*RunningTask, error) {
+	r, err := s.client.NewRequest(http.MethodGet, tasksRunningEndpoint, options)
+	var result []*RunningTask
+	if err != nil {
+		return nil, err
+	}
+	_, err = s.client.Do(r, &result)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
 }

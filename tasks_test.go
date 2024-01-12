@@ -10,7 +10,7 @@ import (
 	"github.com/gocarina/gocsv"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx/types"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	tc "github.com/testcontainers/testcontainers-go/modules/compose"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -20,6 +20,17 @@ type testDO struct {
 	Timestamp time.Time      `db:"ts"`
 	Id        uuid.UUID      `db:"id"`
 	Payload   types.JSONText `db:"payload"`
+}
+
+type TasksServiceTestSuite struct {
+	suite.Suite
+
+	compose tc.ComposeStack
+	client  *Client
+}
+
+func TestTaskService(t *testing.T) {
+	suite.Run(t, &TasksServiceTestSuite{})
 }
 
 var testObjects = []testDO{
@@ -127,71 +138,88 @@ func runInlineIngestionTask[T any](client *Client, dataSourceName string, entrie
 	return nil
 }
 
-func TestTaskService(t *testing.T) {
-	// Set up druid containers using docker-compose.
-	compose, err := tc.NewDockerCompose("testdata/docker-compose.yaml")
-	require.NoError(t, err, "NewDockerComposeAPI()")
-
-	// Set up cleanup for druid containers.
-	t.Cleanup(func() {
-		require.NoError(t, compose.Down(context.Background(), tc.RemoveOrphans(true), tc.RemoveVolumes(true), tc.RemoveImagesLocal), "compose.Down()")
-	})
+func (s *TasksServiceTestSuite) SetupSuite() {
+	var err error
+	s.compose, err = tc.NewDockerCompose("testdata/docker-compose.yaml")
+	s.Require().NoError(err, "NewDockerComposeAPI()")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// Set up druid service and client.
-	d, err := NewClient("http://localhost:8888")
-	require.NoError(t, err, "error should be nil")
+	s.client, err = NewClient("http://localhost:8888")
+	s.Require().NoError(err, "error should be nil")
 
 	// Waiting for druid services to start.
-	err = compose.
+	err = s.compose.
 		WaitForService("coordinator", wait.NewHTTPStrategy(processInformationPathPrefix).WithPort("8081/tcp").WithStartupTimeout(180*time.Second)).
 		WaitForService("router", wait.NewHTTPStrategy(processInformationPathPrefix).WithPort("8888/tcp").WithStartupTimeout(180*time.Second)).
 		WaitForService("broker", wait.NewHTTPStrategy(processInformationPathPrefix).WithPort("8082/tcp").WithStartupTimeout(180*time.Second)).
 		WaitForService("middlemanager", wait.NewHTTPStrategy(processInformationPathPrefix).WithPort("8091/tcp").WithStartupTimeout(180*time.Second)).
 		Up(ctx, tc.Wait(true))
-	require.NoError(t, err, "druid services should be up with no error")
-
-	// Test create ingestion task -> get status -> complete sequence.
-	runInlineIngestionTask(d, "test-submit-task-datasource", testObjects, 2)
-	require.NoError(t, err, "error should be nil")
+	s.Require().NoError(err, "druid services should be up with no error")
 }
 
-func TestTerminateTask(t *testing.T) {
-	// Set up druid containers using docker-compose.
-	compose, err := tc.NewDockerCompose("testdata/docker-compose.yaml")
-	require.NoError(t, err, "NewDockerComposeAPI()")
+func (s *TasksServiceTestSuite) TearDownSuite() {
+	s.Require().NoError(
+		s.compose.Down(
+			context.Background(),
+			tc.RemoveOrphans(true),
+			tc.RemoveVolumes(true),
+			tc.RemoveImagesLocal),
+		"compose.Down()",
+	)
+}
 
-	// Set up cleanup for druid containers.
-	t.Cleanup(func() {
-		require.NoError(t, compose.Down(context.Background(), tc.RemoveOrphans(true), tc.RemoveVolumes(true), tc.RemoveImagesLocal), "compose.Down()")
-	})
+func (s *TasksServiceTestSuite) TestSubmit() {
+	// Test create ingestion task -> get status -> complete sequence.
+	err := runInlineIngestionTask(s.client, "test-submit-task-datasource", testObjects, 2)
+	s.Require().NoError(err, "error should be nil")
+}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Set up druid service and client.
-	d, err := NewClient("http://localhost:8888")
-	require.NoError(t, err, "error should be nil")
-
-	// Waiting for druid services to start.
-	err = compose.
-		WaitForService("coordinator", wait.NewHTTPStrategy(processInformationPathPrefix).WithPort("8081/tcp").WithStartupTimeout(180*time.Second)).
-		WaitForService("router", wait.NewHTTPStrategy(processInformationPathPrefix).WithPort("8888/tcp").WithStartupTimeout(180*time.Second)).
-		WaitForService("broker", wait.NewHTTPStrategy(processInformationPathPrefix).WithPort("8082/tcp").WithStartupTimeout(180*time.Second)).
-		WaitForService("middlemanager", wait.NewHTTPStrategy(processInformationPathPrefix).WithPort("8091/tcp").WithStartupTimeout(180*time.Second)).
-		Up(ctx, tc.Wait(true))
-	require.NoError(t, err, "druid services should be up with no error")
-
+func (s *TasksServiceTestSuite) TestTerminate() {
 	// Test create ingestion task -> get status -> terminate sequence.
-	taskID, err := triggerIngestionTask(d, "test-terminate-task-datasource", testObjects)
-	require.NoError(t, err, "error should be nil")
+	taskID, err := triggerIngestionTask(s.client, "test-terminate-task-datasource", testObjects)
+	s.Require().NoError(err, "error should be nil")
 
-	err = awaitTaskStatus(d, taskID, "RUNNING", 180*time.Second, 200*time.Millisecond)
-	require.NoError(t, err, "error should be nil")
+	err = awaitTaskStatus(s.client, taskID, "RUNNING", 180*time.Second, 200*time.Millisecond)
+	s.Require().NoError(err, "error should be nil")
 
-	shutdownTaskID, err := d.Tasks().Shutdown(taskID)
-	require.NoError(t, err, "error should be nil")
-	require.Equal(t, shutdownTaskID, taskID)
+	shutdownTaskID, err := s.client.Tasks().Shutdown(taskID)
+	s.Require().NoError(err, "error should be nil")
+	s.Require().Equal(shutdownTaskID, taskID)
+}
+
+func (s *TasksServiceTestSuite) TestGetRunningTasks() {
+	tasks, err := s.client.Tasks().GetRunningTasks(RunningTasksOptions{
+		Datasource: "test-get-tasks-datasource",
+		Type:       "index_parallel",
+	})
+	s.Require().NoError(err)
+	initialTasksLen := len(tasks)
+
+	_, err = triggerIngestionTask(s.client, "test-get-tasks-datasource", testObjects)
+	s.Require().NoError(err, "error should be nil")
+
+	// ingestion tasks will be available in short time window, after some delay,
+	// so we need to actively wait for it
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
+	timer := time.NewTimer(2 * time.Minute)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			tasks, err = s.client.Tasks().GetRunningTasks(RunningTasksOptions{
+				Datasource: "test-get-tasks-datasource",
+				Type:       "index_parallel",
+			})
+			s.Require().NoError(err)
+			if len(tasks) > initialTasksLen {
+				return
+			}
+		case <-timer.C:
+			s.FailNow("unable to get running tasks in time")
+		}
+	}
 }
