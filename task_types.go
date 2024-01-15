@@ -44,6 +44,22 @@ type TaskIngestionSpec struct {
 	Spec *IngestionSpecData `json:"spec"`
 }
 
+// RunningTask defines running task returned by GetRunningTasks method.
+// https://druid.apache.org/docs/latest/api-reference/tasks-api#sample-response-2
+type RunningTask struct {
+	ID         string `json:"id"`
+	Type       string `json:"type"`
+	Status     string `json:"status"`
+	Datasource string `json:"dataSource"`
+}
+
+// RunningTasksOptions defines supported options which can be passed to GetRunningTasks method.
+// https://druid.apache.org/docs/latest/api-reference/tasks-api#query-parameters-2
+type RunningTasksOptions struct {
+	Datasource string `url:"datasource"`
+	Type       string `url:"type"`
+}
+
 // defaultTaskIngestionSpec returns a default TaskIngestionSpec with basic ingestion
 // specification fields initialized.
 func defaultTaskIngestionSpec() *TaskIngestionSpec {
