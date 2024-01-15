@@ -188,6 +188,10 @@ func (s *TasksServiceTestSuite) TestTerminate() {
 	shutdownTaskID, err := s.client.Tasks().Shutdown(taskID)
 	s.Require().NoError(err, "error should be nil")
 	s.Require().Equal(shutdownTaskID, taskID)
+
+	status, err := s.client.Tasks().GetStatus(taskID)
+	s.Require().NoError(err)
+	s.Require().Equal(status.Status.Status, "FAILED")
 }
 
 func (s *TasksServiceTestSuite) TestGetRunningTasks() {
