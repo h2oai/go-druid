@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+const (
+	iso8601Format = "2006-01-02T15:04:05"
+)
+
 // TaskStatusResponse is a response object containing status of a task.
 type TaskStatusResponse struct {
 	Task   string     `json:"task"`
@@ -178,8 +182,8 @@ func SetTaskDruidInputSource(datasource string, startTime time.Time, endTime tim
 			Datasource: datasource,
 			Interval: fmt.Sprintf(
 				"%s/%s",
-				startTime.Format("2006-01-02T15:04:05"),
-				endTime.Format("2006-01-02T15:04:05"),
+				startTime.Format(iso8601Format),
+				endTime.Format(iso8601Format),
 			),
 		}
 	}
