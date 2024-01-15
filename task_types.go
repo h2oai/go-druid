@@ -176,11 +176,9 @@ func SetTaskIOConfigType(typ string) TaskIngestionSpecOptions {
 // SetTaskInputFormat configures input format for the task based ingestion.
 func SetTaskInputFormat(typ string, findColumnsHeader string, columns []string) TaskIngestionSpecOptions {
 	return func(spec *TaskIngestionSpec) {
-		spec.Spec.IOConfig.InputFormat = &InputFormat{
-			Type:                  typ,
-			FindColumnsFromHeader: findColumnsHeader,
-			Columns:               columns,
-		}
+		spec.Spec.IOConfig.InputFormat.Type = typ
+		spec.Spec.IOConfig.InputFormat.FindColumnsFromHeader = findColumnsHeader
+		spec.Spec.IOConfig.InputFormat.Columns = columns
 	}
 }
 
