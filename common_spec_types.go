@@ -148,7 +148,7 @@ type GranularitySpec struct {
 	Type               string                `json:"type"`
 	SegmentGranularity string                `json:"segmentGranularity,omitempty"`
 	QueryGranularity   *QueryGranularitySpec `json:"queryGranularity,omitempty"`
-	Rollup             bool                  `json:"rollup,omitempty"`
+	Rollup             bool                  `json:"rollup"`
 	Intervals          []string              `json:"intervals,omitempty"`
 }
 
