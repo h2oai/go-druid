@@ -65,7 +65,7 @@ func defaultTaskIngestionSpec() *TaskIngestionSpec {
 			IOConfig: &IOConfig{
 				Type:        "index_parallel",
 				InputSource: &InputSource{},
-				// InputFormat: &InputFormat{},
+				InputFormat: &InputFormat{},
 			},
 			TuningConfig: &TuningConfig{
 				Type: "index_parallel",
