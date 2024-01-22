@@ -38,6 +38,7 @@ type TuningConfig struct {
 	MaxRowsPerSegment                int        `json:"maxRowsPerSegment,omitempty"`
 	MaxRowsInMemory                  int        `json:"maxRowsInMemory,omitempty"`
 	IndexSpecForIntermediatePersists *IndexSpec `json:"indexSpecForIntermediatePersists,omitempty"`
+	ForceGuaranteedRollup            bool       `json:"forceGuaranteedRollup,omitempty"`
 }
 
 // Metric is a Druid aggregator that is applied at ingestion time.

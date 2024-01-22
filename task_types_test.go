@@ -26,6 +26,7 @@ func TestTaskIngestionSpec(t *testing.T) {
 				SetTaskSchemaDiscovery(false),
 				SetTaskTimestampColumn("__time"),
 				SetTaskGranularitySpec("DAY", &QueryGranularitySpec{"none"}, true),
+				SetForceGuaranteedRollup(true),
 			},
 			expected: func() *TaskIngestionSpec {
 				out := NewTaskIngestionSpec()
@@ -41,6 +42,7 @@ func TestTaskIngestionSpec(t *testing.T) {
 				out.Spec.DataSchema.GranularitySpec.SegmentGranularity = "DAY"
 				out.Spec.DataSchema.GranularitySpec.QueryGranularity = &QueryGranularitySpec{"none"}
 				out.Spec.DataSchema.GranularitySpec.Rollup = true
+				out.Spec.TuningConfig.ForceGuaranteedRollup = true
 				return out
 			}(),
 		},

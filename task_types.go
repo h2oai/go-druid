@@ -224,6 +224,14 @@ func SetTaskGranularitySpec(segmentGranularity string, queryGranularity *QueryGr
 	}
 }
 
+// SetForceGuaranteedRollup sets guaranteed rollup setting for ingestion spec.
+// https://druid.apache.org/docs/latest/ingestion/rollup#perfect-rollup-vs-best-effort-rollup
+func SetForceGuaranteedRollup(rollup bool) TaskIngestionSpecOptions {
+	return func(spec *TaskIngestionSpec) {
+		spec.Spec.TuningConfig.ForceGuaranteedRollup = rollup
+	}
+}
+
 // NewTaskIngestionSpec returns a default TaskIngestionSpec and applies any options passed to it.
 func NewTaskIngestionSpec(options ...TaskIngestionSpecOptions) *TaskIngestionSpec {
 	spec := defaultTaskIngestionSpec()
