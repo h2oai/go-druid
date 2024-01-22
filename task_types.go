@@ -85,7 +85,6 @@ func defaultTaskIngestionSpec() *TaskIngestionSpec {
 			IOConfig: &IOConfig{
 				Type:        "index_parallel",
 				InputSource: &InputSource{},
-				// InputFormat: &InputFormat{},
 			},
 			TuningConfig: &TuningConfig{
 				Type: "index_parallel",
@@ -179,7 +178,7 @@ func SetTaskInputFormat(typ string, findColumnsHeader string, columns []string) 
 		if spec.Spec.IOConfig.InputFormat == nil {
 			spec.Spec.IOConfig.InputFormat = &InputFormat{}
 		}
-		
+
 		spec.Spec.IOConfig.InputFormat.Type = typ
 		spec.Spec.IOConfig.InputFormat.FindColumnsFromHeader = findColumnsHeader
 		spec.Spec.IOConfig.InputFormat.Columns = columns
