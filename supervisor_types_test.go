@@ -87,7 +87,16 @@ var jsonBasic = `{
     "ioConfig": {
         "topic": "test_topic",
         "consumerProperties": {
-            "bootstrap.servers": "test_brokers"
+            "bootstrap.servers": "test_brokers",
+            "druid.dynamic.config.provider": {
+              "type":"environment",
+              "variables": {
+                "sasl.jaas.config":"KAFKA_JAAS_CONFIG",
+                "ssl.key.password":"SSL_KEY_PASSWORD",
+                "ssl.keystore.password":"SSL_KEYSTORE_PASSWORD",
+                "ssl.truststore.password":"SSL_TRUSTSTORE_PASSWORD"
+              }
+            }
         },
         "taskDuration": "PT1H",
         "useEarliestOffset": false,
@@ -101,6 +110,15 @@ var jsonBasic = `{
 }`
 
 func TestKafkaIngestionSpec_MarshalJSON(t *testing.T) {
+	configProvider := EnvironmentVariableDynamicConfigProvider{
+		Type: "environment",
+		Variables: map[string]string{
+			"sasl.jaas.config":        "KAFKA_JAAS_CONFIG",
+			"ssl.key.password":        "SSL_KEY_PASSWORD",
+			"ssl.keystore.password":   "SSL_KEYSTORE_PASSWORD",
+			"ssl.truststore.password": "SSL_TRUSTSTORE_PASSWORD",
+		},
+	}
 	spec := NewIngestionSpec(
 		SetDataSource("test_datasource"),
 		SetTopic("test_topic"),
@@ -110,12 +128,97 @@ func TestKafkaIngestionSpec_MarshalJSON(t *testing.T) {
 			{"user_name"},
 			{"payload"},
 		}),
+		SetEnvironmentDynamicConfigProvider(configProvider),
 	)
 	actual, err := json.Marshal(spec)
 	if err != nil {
 		t.Fatalf("unexpected error while marshalling: %v", err)
 	}
 	expected := []byte(jsonBasic)
+	require.JSONEq(t, string(expected), string(actual), fmt.Sprintf("expected: %s\nactual: %s", string(expected), string(actual)))
+
+	var checkSpec *InputIngestionSpec
+	err = json.Unmarshal(actual, &checkSpec)
+	if err != nil {
+		t.Fatalf("unexpected error while unmarshalling: %v", err)
+	}
+	require.Equal(t, spec, checkSpec)
+}
+
+var jsonWithMapStringConfigProvider = `{
+    "type": "kafka",
+    "dataSchema": {
+        "dataSource": "test_datasource",
+        "timestampSpec": {
+            "column": "ts",
+            "format": "auto"
+        },
+        "transformSpec": {
+            "transforms": []
+        },
+        "dimensionsSpec": {
+            "dimensions": [
+                "ts",
+                "user_name",
+                "payload"
+            ]
+        },
+        "granularitySpec": {
+			"type": "uniform",
+            "segmentGranularity": "DAY",
+            "queryGranularity":  "none",
+            "rollup": false
+        }
+    },
+    "ioConfig": {
+        "topic": "test_topic",
+        "consumerProperties": {
+            "bootstrap.servers": "test_brokers",
+            "druid.dynamic.config.provider": {
+              "config": {
+                "sasl.jaas.config":"org.apache.kafka.common.security.plain.PlainLoginModule required username='admin_user' password='admin_password';",
+                "ssl.key.password":"ssl_key_password",
+                "ssl.keystore.password":"ssl_keystore_password",
+                "ssl.truststore.password":"ssl_truststore_password"
+              }
+            }
+        },
+        "taskDuration": "PT1H",
+        "useEarliestOffset": false,
+        "flattenSpec": {
+            "fields": []
+        },
+        "inputFormat": {
+            "type": "json"
+        }
+    }
+}`
+
+func TestKafkaIngestionSpecWithMapStringConfigProvider_MarshalJSON(t *testing.T) {
+	configProvider := MapStringDynamicConfigProvider{
+		Config: map[string]string{
+			"sasl.jaas.config":        "org.apache.kafka.common.security.plain.PlainLoginModule required username='admin_user' password='admin_password';",
+			"ssl.key.password":        "ssl_key_password",
+			"ssl.keystore.password":   "ssl_keystore_password",
+			"ssl.truststore.password": "ssl_truststore_password",
+		},
+	}
+	spec := NewIngestionSpec(
+		SetDataSource("test_datasource"),
+		SetTopic("test_topic"),
+		SetBrokers("test_brokers"),
+		SetDimensions(DimensionSet{
+			{"ts"},
+			{"user_name"},
+			{"payload"},
+		}),
+		SetMapStringDynamicConfigProvider(configProvider),
+	)
+	actual, err := json.Marshal(spec)
+	if err != nil {
+		t.Fatalf("unexpected error while marshalling: %v", err)
+	}
+	expected := []byte(jsonWithMapStringConfigProvider)
 	require.JSONEq(t, string(expected), string(actual), fmt.Sprintf("expected: %s\nactual: %s", string(expected), string(actual)))
 
 	var checkSpec *InputIngestionSpec

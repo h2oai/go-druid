@@ -262,10 +262,27 @@ type IOConfig struct {
 	IdleConfig  *IdleConfig  `json:"idleConfig,omitempty"`
 }
 
+// EnvironmentVariableDynamicConfigProvider provides configuration values via environment variables.
+type EnvironmentVariableDynamicConfigProvider struct {
+	Type      string            `json:"type"`
+	Variables map[string]string `json:"variables"`
+}
+
+// MapStringDynamicConfigProvider passes config values as a <key, value> map.
+type MapStringDynamicConfigProvider struct {
+	Config map[string]string `json:"config"`
+}
+
+// DynamicConfigProvider is an umbrella type for different DynamicConfigProviders.
+type DynamicConfigProvider struct {
+	Value any
+}
+
 // ConsumerProperties is a set of properties that is passed to a specific
 // consumer, i.e. Kafka consumer.
 type ConsumerProperties struct {
-	BootstrapServers string `json:"bootstrap.servers,omitempty"`
+	BootstrapServers           string                 `json:"bootstrap.servers,omitempty"`
+	DruidDynamicConfigProvider *DynamicConfigProvider `json:"druid.dynamic.config.provider,omitempty"`
 }
 
 // InputFormat specifies kafka messages format type and describes any conversions applied to
@@ -384,4 +401,22 @@ func (g *DimensionSpec) UnmarshalJSON(b []byte) error {
 
 func (g *DimensionSpec) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&g.Value)
+}
+
+func (p *DynamicConfigProvider) UnmarshalJSON(b []byte) error {
+	var evcp EnvironmentVariableDynamicConfigProvider
+	if err := json.Unmarshal(b, &evcp); err == nil && evcp.Type == "environment" {
+		p.Value = evcp
+		return nil
+	}
+	var mcp MapStringDynamicConfigProvider
+	if err := json.Unmarshal(b, &mcp); err == nil {
+		p.Value = mcp
+		return nil
+	}
+	return fmt.Errorf("unsupported query granularity: %s", b)
+}
+
+func (p *DynamicConfigProvider) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&p.Value)
 }

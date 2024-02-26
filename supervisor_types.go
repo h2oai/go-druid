@@ -230,6 +230,18 @@ func SetGranularitySpec(segmentGranularity string, queryGranularity *QueryGranul
 	}
 }
 
+func SetEnvironmentDynamicConfigProvider(dynamicConfig EnvironmentVariableDynamicConfigProvider) IngestionSpecOptions {
+	return func(spec *InputIngestionSpec) {
+		spec.IOConfig.ConsumerProperties.DruidDynamicConfigProvider = &DynamicConfigProvider{dynamicConfig}
+	}
+}
+
+func SetMapStringDynamicConfigProvider(dynamicConfig MapStringDynamicConfigProvider) IngestionSpecOptions {
+	return func(spec *InputIngestionSpec) {
+		spec.IOConfig.ConsumerProperties.DruidDynamicConfigProvider = &DynamicConfigProvider{dynamicConfig}
+	}
+}
+
 // SetSQLInputSource configures sql input source.
 func SetSQLInputSource(dbType, connectURI, user, password string, sqls []string) IngestionSpecOptions {
 	return func(spec *InputIngestionSpec) {
