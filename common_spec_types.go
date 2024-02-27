@@ -414,7 +414,7 @@ func (p *DynamicConfigProvider) UnmarshalJSON(b []byte) error {
 		p.Value = mcp
 		return nil
 	}
-	return fmt.Errorf("unsupported query granularity: %s", b)
+	return fmt.Errorf("unsupported dynamic config provider: %s", b)
 }
 
 func (p *DynamicConfigProvider) MarshalJSON() ([]byte, error) {
